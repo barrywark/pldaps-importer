@@ -1,4 +1,10 @@
 classdef TestImport < TestPladps
+    
+    properties
+        pdsFile
+        plxFile
+    end
+    
     methods
         function self = TestImport(name)
              self = self@TestPladps(name);
@@ -14,9 +20,10 @@ classdef TestImport < TestPladps
             expt = project.insertExperiment('TestImportMapping',...
                 org.joda.time.DateTime());
             
+            self.pdsFile = 'fixtures/pat120811a_decision2_16.PDS';
             trialFunctionName = 'trial_function_name';
             epochGroup = ImportPladpsPDS(expt,...
-                'fixtures/pds.PDS',...
+                self.pdsFile,...
                 trialFunctionName,...
                 timezone);
             
@@ -32,8 +39,9 @@ classdef TestImport < TestPladps
             %  - should have sequential unique identifier with prev/next
             %  - should have next/pre
             
+            self.plxFile = 'fixtures/pat120811a_decision2_1600matlabfriendlyPLX.mat';
             ImportPladpsPlx(epochGroup,...
-                'fixtures/plx.mat');
+                self.plxFile);
             
             % These are for plx import
             %  - should have spike times t0 < ts <= end_trial

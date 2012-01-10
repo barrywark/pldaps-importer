@@ -1,6 +1,8 @@
 *~
+.DS_Store
 
 # Objy
 *.boot
 *.fdb
 *.ap
+
