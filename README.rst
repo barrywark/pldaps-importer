@@ -24,7 +24,6 @@ To use the importer:
         trialFunctionName,...
         experimentTimeZone)
         
-To add spike information from a Plexon data file::
 
 #. Export spike sorting data from a ``.plx`` to a Matlab ``.mat`` file::
     
