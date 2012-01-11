@@ -3,7 +3,7 @@ PL-DA-PS importer for Ovation
 =============================
 
 
-This project contains Matlab[#]_ code for importing `PL-DA-PS <http://hukdata.cps.utexas.edu/archive/PLDAPS.html>` data into the `Ovation Scientific Data Management System <http://physionconsulting.com/web/Ovation.html>`.
+This project contains Matlab[1]_ code for importing `PL-DA-PS <http://hukdata.cps.utexas.edu/archive/PLDAPS.html>` data into the `Ovation Scientific Data Management System <http://physionconsulting.com/web/Ovation.html>`.
 
 Basic Usage
 -----------
@@ -39,6 +39,6 @@ To add spike information from a Plexon data file::
 
 
 
-.. [#] Matlab is a registered trademark of The Mathworks, Inc..
+.. [1] Matlab is a registered trademark of The Mathworks, Inc..
 
 
