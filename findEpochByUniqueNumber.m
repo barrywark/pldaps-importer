@@ -5,7 +5,7 @@ function epoch = findEpochByUniqueNumber(epochGroup, uniqueNumber)
         return;
     end
     
-    epochs = epochGroup.getEpochsUnsorted();
+    epochs = epochGroup.getEpochs();
     for i = 1:length(epochs)
        epoch = epochs(i);
        
@@ -23,7 +23,7 @@ function epoch = findEpochByUniqueNumber(epochGroup, uniqueNumber)
            return;
        end
        
-       if(all(mod(epochUniqueNumber,255) == uniqueNumber))
+       if(all(mod(epochUniqueNumber,256) == uniqueNumber))
            warning('ovation:import:plx:unique_number', 'uniqueNumber appears to be 8-bit truncated');
            return;
        end

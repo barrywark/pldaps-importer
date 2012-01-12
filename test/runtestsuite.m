@@ -7,6 +7,7 @@ password = 'password';
 % only dependency. There shouldn't be any magic numbers in the test code.
 pdsFile = 'fixtures/pat120811a_decision2_16.PDS';
 plxFile = 'fixtures/pat120811a_decision2_1600matlabfriendlyPLX.mat';
+plxExpFile = 'fixtures/pat120811a_decision2_1600plx.exp';
  
 % Delete the test database if it exists
 if(exist(connection_file, 'file') ~= 0)
@@ -46,6 +47,6 @@ epochGroup = ImportPladpsPDS(expt,...
     timezone,...
     25); %TODO only import 2 trials for now
 
-ImportPLX(epochGroup, plxFile, expt.externalDevice('TODO','TODO'));
+ImportPLX(epochGroup, plxFile, plxExpFile, expt.externalDevice('TODO','TODO'));
 
 runtests
