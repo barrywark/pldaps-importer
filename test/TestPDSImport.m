@@ -18,31 +18,40 @@ classdef TestPDSImport < TestPladpsBase
             self.pdsFile = 'fixtures/pat120811a_decision2_16.PDS';
             self.plxFile = 'fixtures/pat120811a_decision2_1600matlabfriendlyPLX.mat';
             
-            % TODO: uncomment for real testing
-%             ctx = Ovation.connect(self.connection_file, self.username, self.password);
-%             project = ctx.insertProject('TestImportMapping',...
-%                 'TestImportMapping',...
-%                 datetime());
-%             
-%             expt = project.insertExperiment('TestImportMapping',...
-%                 datetime());
-%             source = ctx.insertSource('animal');
-%             
-%             self.trialFunctionName = 'trial_function_name';
-%             self.timezone = 'America/New_York';
-%             
-%             
-%             % Import the PDS file
-%             self.epochGroup = ImportPladpsPDS(expt,...
-%                 source,...
-%                 self.pdsFile,...
-%                 self.trialFunctionName,...
-%                 self.timezone);
-%             
-%             
-%             % Import the plx file
-%             ImportPladpsPlx(epochGroup,...
-%                 self.plxFile);
+            ctx = Ovation.connect(self.connection_file, self.username, self.password);
+            project = ctx.insertProject('TestImportMapping',...
+                'TestImportMapping',...
+                datetime());
+            
+            expt = project.insertExperiment('TestImportMapping',...
+                datetime());
+            source = ctx.insertSource('animal');
+            
+            self.trialFunctionName = 'trial_function_name';
+            self.timezone = 'America/New_York';
+            
+            
+            
+            % Import the PDS file
+            self.epochGroup = ImportPladpsPDS(expt,...
+                source,...
+                self.pdsFile,...
+                self.trialFunctionName,...
+                self.timezone,...
+                2); %TODO only import 2 trials for now
+            
+            
+            % Import the plx file
+            %ImportPladpsPlx(self.epochGroup,...
+            %   self.plxFile);
+        end
+        
+        function setUp(self)
+           setUp@TestPladpsBase(self);
+           
+           %TODO remove for real testing
+           itr = self.context.query('EpochGroup', 'true');
+           self.epochGroup = itr.next();
         end
         
         % EpochGroup
@@ -71,7 +80,23 @@ classdef TestPDSImport < TestPladpsBase
             % Import should use trialFunctionName as inserted EpochGroup
             % label.
             
-            assert(epochGroup.getLabel().equals(java.lang.String(trialFunctionName)));
+            assertTrue(self.epochGroup.getLabel().equals(java.lang.String(self.trialFunctionName)));
+            
+        end
+        
+        function testEpochGroupShouldHavePDSStartTime(self)
+            import ovation.*;
+            fileStruct = load(self.pdsFile, '-mat');
+            pds = fileStruct.PDS;
+            
+            idx = find(pds.unique_number(:,1) ~= -1);
+            unum = pds.unique_number(idx(1),:);
+            first_duration = pds.eyepos{idx(1)}(end,3);
+            
+            endTime = datetime(unum(1), unum(2), unum(3), unum(4), unum(5), unum(6), 0, self.timezone);
+            startTime = endTime.minusSeconds(first_duration);
+            
+            assertTrue(self.epochGroup.getStartTime().equals(startTime));
             
         end
     end

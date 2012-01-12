@@ -1,4 +1,4 @@
-function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction, timezone)
+function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction, timezone,  ntrials)
     % Import PL-DA-PS PDS structural data into an Ovation Experiment
     %
     %    epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, 
@@ -20,6 +20,11 @@ function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction
     
     import ovation.*;
     
+    nargchk(5, 6, nargin);
+    if(nargin < 6)
+        ntrials = [];
+    end
+    
     %validate(); -makes sure the properties have the right length, etc
     files = load('-mat', pdsfile);
     pds = files.PDS;
@@ -33,22 +38,25 @@ function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction
     
     % generate the start and end times for each epoch, from the unique_number and
     % timezone
-    d = pds.eyepos{1}';
-    durations = d(3, :)';
-    [times, idx] = GenerateStartAndEndTimes(int8(pds.unique_number), durations, timezone);
+    
+    [times, idx] = GenerateStartAndEndTimes(pds.unique_number, pds.eyepos, timezone);
     
     %% Insert one epochGroup per PDS file
     epochGroup = experiment.insertEpochGroup(animal, pdsfile, times{1}.starttime, times{end}.endtime);
-    insertEpochs(idx, epochGroup, trialFunction, pds, times, repmat(c1,length(pds.unique_number),1), devices); %c1 should be a struct array, but we're faking it
+    insertEpochs(idx, epochGroup, trialFunction, pds, times, repmat(c1,length(pds.unique_number),1), devices, ntrials); %TODO c1 should be a struct array, but we're faking it
     
 end
 
-function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devices)
+function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devices, ntrials)
     import ovation.*;
+    
+    if(isempty(ntrials))
+        ntrials = length(times);
+    end
     
     disp('Importing Epochs...');
     previousEpoch = [];
-    for n=1:length(times)
+    for n=1:ntrials
         disp(['    ' num2str(n) ' of ' num2str(length(times)) '...']);
         
         

@@ -32,31 +32,34 @@ classdef TestPladpsBase < TestCase
             
             import ovation.*;
             
-            % TODO uncomment for real testing
-%             % Delete the test database if it exists
-%             if(exist('ovation/matlab_fd.connection', 'file') ~= 0)
-%                 ovation.util.deleteLocalOvationDatabase('ovation/matlab_fd.connection', true);
-%             end
-%             
-%             
-%             
-%             % Create a test database
-%             system('mkdir -p ovation');
-%             self.username = 'TestUser';
-%             self.password = 'password';
-%             self.connection_file = ovation.util.createLocalOvationDatabase('ovation', ...
-%                 'matlab_fd',...
-%                 self.username,...
-%                 self.password,...
-%                 'license.txt',...
-%                 'ovation-development');
+            self.connection_file = 'ovation/matlab_fd.connection';
+            
+            % Delete the test database if it exists
+            if(exist(self.connection_file, 'file') ~= 0)
+                ovation.util.deleteLocalOvationDatabase(self.connection_file, true);
+            end
+            
+            
+            
+            % Create a test database
+            system('mkdir -p ovation');
+            self.username = 'TestUser';
+            self.password = 'password';
+            
+            self.connection_file = ovation.util.createLocalOvationDatabase('ovation', ...
+                'matlab_fd',...
+                self.username,...
+                self.password,...
+                'license.txt',...
+                'ovation-development');
             
         end
 
         function setUp(self)
+            import ovation.*;
+            
             self.context = Ovation.connect(self.connection_file, self.username, self.password);
-%             addpath(pwd()); %test dir
-%             addpath([pwd() '/..']); %pladps_importer
+            
         end
 
         function tearDown(self)
