@@ -1,4 +1,22 @@
 function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction, timezone)
+% Import PL-DA-PS PDS structural data into an Ovation Experiment
+%
+%    epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, 
+%                                 trialFunction, timezone)
+%
+%      experiment: ovation.Experiment or ovation.EpochGroup object. A
+%      new EpochGroup for this PDS data will be added to the given
+%      experiment.
+%
+%      animal: ovation.Source. The Source for the newly added
+%      EpochGroup.
+%
+%      pdsfile: path to .PDS file
+%
+%      trialFunction: PLDAPS trial function name
+%
+%      timezone: name of the time zone (e.g. 'America/New_York') where
+%      the experiment was performed
     
     import ovation.*;
     
