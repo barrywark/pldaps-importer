@@ -6,6 +6,7 @@ classdef TestPLXImport < TestPldapsBase
         epochGroup
         trialFunctionName
         timezone
+        plx
     end
     
     methods
@@ -33,6 +34,9 @@ classdef TestPLXImport < TestPldapsBase
            itr = self.context.query('EpochGroup', 'true');
            self.epochGroup = itr.next();
            assertFalse(itr.hasNext());
+           
+           plxStruct = load(self.plxFile);
+           self.plx = plxStruct.plx;
         end
         
         % These are for plx import
@@ -49,21 +53,84 @@ classdef TestPLXImport < TestPldapsBase
         end
         
         function testFindsMatchingEpochFromUniqueNumber(self)
-            plxStruct = load(self.plxFile);
-            plx = plxStruct.plx;
             
-            idx = find(plx.unique_number(:,1) ~= 0);
+            idx = find(self.plx.unique_number(:,1) ~= 0);
             
-            unum = plx.unique_number(idx(1));
+            unum = self.plx.unique_number(idx(1),:);
             
             epoch = findEpochByUniqueNumber(self.epochGroup, unum);
-            
+            assertFalse(isempty(epoch));
             epochUnum = epoch.getMyProperty('uniqueNumber').getIntegerData();
             assertEquals(mod(epochUnum, 256), unum);
         end
         
         function testShouldHaveSpikeTimesForEachUnit(self)
+            epochs = self.epochGroup.getEpochsUnsorted();
+            for i = 1:length(epochs)
+               epoch = epochs(i);
+               epochUniqueNumber = epoch.getMyProperty('uniqueNumber').getIntegerData()'; 
+               plxUniqueNumber = mod(epochUniqueNumber, 256); % Yikes!
+               
+               plxIdx = self.plxIdxForUniqueNumber(plxUniqueNumber);
+               
+               if(isempty(plxIdx) || isempty(self.plx.spike_times{plxIdx}))
+                   continue;
+               end
+               
+               [maxChannels,maxUnits] = size(self.plx.spike_times{plxIdx});
+               for c = 2:maxChannels % row 1 is unsorted
+                   for u = 2:maxUnits % col 1 is unsorted
+                       if(~isempty(self.plx.spike_times{plxIdx}{c,u}))
+                           drName = ['spikeTimes_channel_' num2str(c-1) '_unit_' num2str(u-1)];
+                           dr = epoch.getMyDerivedResponse(drName);
+                           times = dr.getDoubleData();
+                           assertTrue(all(diff(self.plx.spike_times{plxIdx}{c,u}, times) < 0.001));
+                       end
+                   end
+               end
+            end
+        end
+        
+        function testDerivedResponsesHaveDerivationParamters(self)
+            assertFalse(true);
+        end
+        
+        function testShouldHaveSpikeWaveformsForEachUnit(self)
+            epochs = self.epochGroup.getEpochsUnsorted();
+            for i = 1:length(epochs)
+               epoch = epochs(i);
+               epochUniqueNumber = epoch.getMyProperty('uniqueNumber').getIntegerData()'; 
+               plxUniqueNumber = mod(epochUniqueNumber, 256); % Yikes!
+               
+               plxIdx = self.plxIdxForUniqueNumber(plxUniqueNumber);
+               
+               if(isempty(plxIdx) || isempty(self.plx.spike_waveforms{plxIdx}))
+                   continue;
+               end
+               
+               [maxChannels,maxUnits] = size(self.plx.spike_waveforms{plxIdx});
+               for c = 2:maxChannels % row 1 is unsorted
+                   for u = 2:maxUnits % col 1 is unsorted
+                       if(~isempty(self.plx.spike_waveforms{plxIdx}{c,u}))
+                           drName = ['spikeWaveforms_channel_' num2str(c-1) '_unit_' num2str(u-1)];
+                           dr = epoch.getMyDerivedResponse(drName);
+                           waveForms = reshape(dr.getDoubleData(), dr.getShape());
+                           assertTrue(all(diff(self.plx.spike_waveforms{plxIdx}{c,u}, waveForms) < 0.001));
+                       end
+                   end
+               end
+            end
+        end
+        
+        function idx = plxIdxForUniqueNumber(self, unum)
+            for i = 1:length(self.plx.unique_number)
+                if(all(unum == self.plx.unique_number(i,:)))
+                    idx = i;
+                    return;
+                end
+            end
             
+            idx = [];
         end
         
         function testSpikeTimeShouldBeInEpochTimeRange(self)

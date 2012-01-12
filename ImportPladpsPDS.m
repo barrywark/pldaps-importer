@@ -26,9 +26,9 @@ function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction
     end
     
     %validate(); -makes sure the properties have the right length, etc
-    files = load('-mat', pdsfile);
-    pds = files.PDS;
-    c1 = files.c1;
+    pdsFileStruct = load('-mat', pdsfile);
+    pds = pdsFileStruct.PDS;
+    c1 = pdsFileStruct.c1;
     
     devices.psychToolbox = experiment.insertExternalDevice('PsychToolbox', 'Huk lab');
     devices.datapixx = experiment.insertExternalDevice('DataPixx', 'FIXME');% what to do here
@@ -73,8 +73,8 @@ function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devic
             struct2map(protocol_parameters));
         
         epoch.addProperty('datapixxtime', pds.datapixxtime(idx(n))); % we may not need this
-        epoch.addProperty('uniqueNumber', NumericData(int32(pds.unique_number(idx(n)))));
-        epoch.addProperty('uniqueNumberString', num2str(pds.unique_number(idx(n))));
+        epoch.addProperty('uniqueNumber', NumericData(int32(pds.unique_number(idx(n),:))));
+        epoch.addProperty('uniqueNumberString', num2str(pds.unique_number(idx(n),:)));
         epoch.addProperty('trialNumber', pds.trialnumber(idx(n)));
         epoch.addProperty('goodTrial', pds.goodtrial(idx(n))); % -1 for bad trials
         

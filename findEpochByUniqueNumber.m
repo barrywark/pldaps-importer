@@ -17,7 +17,7 @@ function epoch = findEpochByUniqueNumber(epochGroup, uniqueNumber)
            return;
        end
        
-       epochUniqueNumber = vals(1).getIntegerData();
+       epochUniqueNumber = vals(1).getIntegerData()';
        
        if(all(epochUniqueNumber == uniqueNumber))
            return;
