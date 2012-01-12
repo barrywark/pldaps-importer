@@ -75,10 +75,23 @@ classdef TestPDSImport < TestPldapsBase
             first_duration = pds.eyepos{idx(1)}(end,3);
             
             endTime = datetime(unum(1), unum(2), unum(3), unum(4), unum(5), unum(6), 0, self.timezone);
-            startTime = endTime.minusSeconds(first_duration);
+            startTime = endTime.minusMillis(first_duration * 1000);
             
             assertTrue(self.epochGroup.getStartTime().equals(startTime));
             
+        end
+        
+        function testEpochGroupShouldHavePDSEndTime(self)
+                        import ovation.*;
+            fileStruct = load(self.pdsFile, '-mat');
+            pds = fileStruct.PDS;
+            
+            idx = find(pds.unique_number(:,1) ~= -1);
+            unum = pds.unique_number(idx(end),:);
+            
+            endTime = datetime(unum(1), unum(2), unum(3), unum(4), unum(5), unum(6), 0, self.timezone);
+            
+            assertTrue(self.epochGroup.getEndTime().equals(endTime));
         end
     end
 end
