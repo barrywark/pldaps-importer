@@ -7,6 +7,7 @@ classdef TestPLXImport < TestPldapsBase
         trialFunctionName
         timezone
         plx
+        plxExpFile
         drNameSuffix
     end
     
@@ -19,6 +20,7 @@ classdef TestPLXImport < TestPldapsBase
             % N.B. these value should match those in runtestsuite
             self.pdsFile = 'fixtures/pat120811a_decision2_16.PDS';
             self.plxFile = 'fixtures/pat120811a_decision2_1600matlabfriendlyPLX.mat';
+            self.plxExpFile = 'fixtures/pat120811a_decision2_1600plx.exp';
             self.trialFunctionName = 'trial_function_name';
             self.timezone = 'America/New_York';
             
@@ -105,7 +107,43 @@ classdef TestPLXImport < TestPldapsBase
         end
         
         function testDerivedResponsesHaveDerivationParamters(self)
-            assertFalse(true);
+            epochs = self.epochGroup.getEpochsUnsorted();
+            exp = exp = loadPLXExpFile(self.plxExpFile);
+            
+            for i = 1:length(epochs)
+                epoch = epochs(i);
+                epochUniqueNumber = epoch.getMyProperty('uniqueNumber').getIntegerData()';
+                plxUniqueNumber = mod(epochUniqueNumber, 256); % Yikes!
+                
+                plxIdx = self.plxIdxForUniqueNumber(plxUniqueNumber);
+                
+                if(isempty(plxIdx) || isempty(self.plx.spike_waveforms{plxIdx}))
+                    continue;
+                end
+                
+                [maxChannels,maxUnits] = size(self.plx.spike_waveforms{plxIdx});
+                for c = 2:maxChannels % row 1 is unsorted
+                    for u = 2:maxUnits % col 1 is unsorted
+                        if(~isempty(self.plx.spike_waveforms{plxIdx}{c,u}))
+                            
+                            % Assume there's only one DR
+                            drName = ['spikeWaveforms_channel_' num2str(c-1)...
+                                '_unit_' num2str(u-1) ...
+                                self.drNameSuffix '-1'];
+                            
+                            dr = epoch.getMyDerivedResponse(drName);
+                            if(~isempty(dr))
+                                params = dr.getDerivationParameters();
+                                fnames = fieldnames(exp);
+                                for f=1:length(fnames)
+                                    fname = fnames{i};
+                                    assertTrue(params.containsKey(fname));
+                                end
+                            end
+                        end
+                    end
+                end
+            end
         end
         
         function testShouldHaveSpikeWaveformsForEachUnit(self)

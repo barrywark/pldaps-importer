@@ -4,15 +4,18 @@ function ImportPLX(epochGroup, plxFile, expFile, plexonDevice)
     
     plxStruct = load('-mat', plxFile);
     plx = plxStruct.plx;
-    exp = loadPLXExpFile(expFile);
-    expModificationDate = org.joda.time.DateTime(java.io.File(expFile).lastModified());
+    
+    expModificationDate = org.joda.time.DateTime(...
+        java.io.File(expFile).lastModified());
     drSuffix = [num2str(expModificationDate.getYear()) '-' ...
         num2str(expModificationDate.getMonthOfYear()) '-'...
         num2str(expModificationDate.getDayOfMonth())];
     
     
     %TODO: derivationParameters
-    derivationParameters = struct2map(struct());
+    derivationParameters = struct2map(...
+        convertNumericDataInStruct(...
+        loadPLXExpFile(expFile)));
     
     disp('Importing PLX data...');
     idx = find(plx.unique_number(:,1) > 0);
@@ -23,7 +26,8 @@ function ImportPLX(epochGroup, plxFile, expFile, plexonDevice)
             plx.unique_number(idx(i),:));
         
         if(isempty(epoch))
-            warning('ovation:import:plx:unique_number', 'PLX data appears to contain a unique number not present in the epoch group');
+            warning('ovation:import:plx:unique_number',...
+                'PLX data appears to contain a unique number not present in the epoch group');
             continue;
         end
         
@@ -40,13 +44,16 @@ function ImportPLX(epochGroup, plxFile, expFile, plexonDevice)
                         continue;
                     end
                     
-                    derivedResponseName = ['spikeTimes_channel_' num2str(c-1) '_unit_' num2str(u-1)];
+                    derivedResponseName = ['spikeTimes_channel_' ...
+                        num2str(c-1) '_unit_' num2str(u-1)];
                     
                     j = 1;
-                    drNameCandidate = [derivedResponseName '-' drSuffix '-' num2str(j)];
+                    drNameCandidate = [derivedResponseName '-' ...
+                        drSuffix '-' num2str(j)];
                     while(~isempty(epoch.getMyDerivedResponse(drNameCandidate)))
                         j = j+1;
-                        drNameCandidate = [derivedResponseName '-' drSuffix '-' num2str(j)];
+                        drNameCandidate = [derivedResponseName '-'...
+                            drSuffix '-' num2str(j)];
                     end
                     
                     derivedResponseName = drNameCandidate;
@@ -75,17 +82,21 @@ function ImportPLX(epochGroup, plxFile, expFile, plexonDevice)
                         continue;
                     end
                     
-                    derivedResponseName = ['spikeWaveforms_channel_' num2str(c-1) '_unit_' num2str(u-1)];
+                    derivedResponseName = ['spikeWaveforms_channel_'...
+                        num2str(c-1) '_unit_' num2str(u-1)];
                     
                     waveformData = spike_waveforms{c,u};
-                    data = NumericData(reshape(waveformData, 1, numel(waveformData)),...
+                    data = NumericData(reshape(waveformData, 1, ...
+                        numel(waveformData)),...
                         size(waveformData));
                     
                     j = 1;
-                    drNameCandidate = [derivedResponseName '-' drSuffix '-' num2str(j)];
+                    drNameCandidate = [derivedResponseName '-' ...
+                        drSuffix '-' num2str(j)];
                     while(~isempty(epoch.getMyDerivedResponse(drNameCandidate)))
                         j = j+1;
-                        drNameCandidate = [derivedResponseName '-' drSuffix '-' num2str(j)];
+                        drNameCandidate = [derivedResponseName '-'...
+                            drSuffix '-' num2str(j)];
                     end
                     
                     derivedResponseName = drNameCandidate;

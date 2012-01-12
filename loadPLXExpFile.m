@@ -16,10 +16,11 @@ function exp = loadPLXExpFile(expFilePath)
     while line ~=-1
         if line(1) ~= ';'
             try 
-                eval(['exp.' line ';']);
+                eval(['exp.' strrep(line, '.', '_') ';']);
             catch
                 equals = find(line=='=');
-                eval(['exp.' line(1:equals) '''' line(equals+1:end) ''';']);
+                eval(['exp.' strrep(line(1:equals), '.', '_')...
+                    '''' line(equals+1:end) ''';']);
             end
         end
         line = fgetl(fid);
