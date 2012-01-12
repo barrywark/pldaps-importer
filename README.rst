@@ -32,9 +32,24 @@ To use the importer:
 #. Append ``DerivedResponses`` with spike times and spike waveforms to ``Epochs`` already in the database::
 
     >> ImportPladpsPlx(epochGroup,...
-        <path to Matlab plx data>);
+        plxFilePath,...
+        expFilePath);
 
-This step will fail if ``Epochs`` in the plexon data are not already represented by ``Epoch`` instances in the Ovaiton database.
+This step will will issue a warning ``Epochs`` in the plexon data are not already represented by ``Epoch`` instances in the Ovation database.
+
+
+Automated tests
+---------------
+
+To run the automated test suite:
+
+#. Add ``pldaps-importer`` folder to the Matlab path
+#. Add Matlab xUnit (``pldaps-importer/matlab-xunit``) to the Matlab path
+#. From within the ``pldaps-importer/test`` directory::
+    
+    >> runtestsuite
+    
+
 
 
 

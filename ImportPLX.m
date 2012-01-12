@@ -1,4 +1,16 @@
-function ImportPLX(epochGroup, plxFile, expFile, plexonDevice)
+function ImportPLX(epochGroup, plxFile, expFile)
+    % Import Plexon data into an existing PL-DA-PS PDS EpochGroup
+    %
+    %    ImportPLX(epochGroup, plxFile, expFile)
+    %
+    %      epochGroup: ovation.EpochGroup containing Epochs matching Plexon
+    %      data.
+    %
+    %      plxFile: Path to a Matlab .mat file produced by plx2mat from a Plexon .plx
+    %      file.
+    %
+    %      expFile: Path to a spike sorter .exp file with parameters for
+    %      the spike sorting in plxFile.
     
     import ovation.*
     

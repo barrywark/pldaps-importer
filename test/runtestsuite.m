@@ -1,3 +1,11 @@
+% This script builds a new Ovation database for testing and imports the
+% test fixture. Run this script from the pladps-importer/test directory.
+%
+% After running runtestsuite, you may run runtests (the Matlab xUnit test
+% runner) to re-run the test suite without building a new database or
+% re-importing the test fixture data.
+
+
 % N.B. these values should match in TestPldapsBase
 connection_file = 'ovation/matlab_fd.connection';
 username = 'TestUser';
@@ -47,6 +55,6 @@ epochGroup = ImportPladpsPDS(expt,...
     timezone,...
     25); %TODO only import 2 trials for now
 
-ImportPLX(epochGroup, plxFile, plxExpFile, expt.externalDevice('TODO','TODO'));
+ImportPLX(epochGroup, plxFile, plxExpFile);
 
 runtests
