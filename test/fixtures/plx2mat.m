@@ -72,6 +72,9 @@ for i = 1:length(plx.end_times) % for all start value time stamps
         for j = 1:length(plx.channel) % for all channels
            [~, plx.npw, plx.wave_timestamps, plx.spike_waves] = plx_waves_v(plxname, plx.channel(j)-1, plx.unit(j)-1);
            plx.spike_times{i}{plx.channel(j)-1, plx.unit(j)} = plx.wave_timestamps(plx.wave_timestamps > temp_start_time & plx.wave_timestamps < plx.end_times(i)+1)-temp_start_time;
+           
+           %TODO
+           plx.spike_waveforms{i}{plx.channel(j)-1, plx.unit(j)} = plx.spike_waves(plx.wave_timestamps > temp_start_time & plx.wave_timestamps < plx.end_times(i)+1,:);
         end
     end
 end
