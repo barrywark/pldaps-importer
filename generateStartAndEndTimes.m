@@ -1,4 +1,4 @@
-function [times, idx] = GenerateStartAndEndTimes(macTimes, eyepos, timezone)
+function [times, idx] = generateStartAndEndTimes(macTimes, eyepos, timezone)
     if (size(macTimes, 2) ~= 6) %throw error
         
     end

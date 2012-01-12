@@ -39,7 +39,7 @@ function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction
     % generate the start and end times for each epoch, from the unique_number and
     % timezone
     
-    [times, idx] = GenerateStartAndEndTimes(pds.unique_number, pds.eyepos, timezone);
+    [times, idx] = generateStartAndEndTimes(pds.unique_number, pds.eyepos, timezone);
     
     %% Insert one epochGroup per PDS file
     epochGroup = experiment.insertEpochGroup(animal, pdsfile, times{1}.starttime, times{end}.endtime);
@@ -73,7 +73,8 @@ function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devic
             struct2map(protocol_parameters));
         
         epoch.addProperty('datapixxtime', pds.datapixxtime(idx(n))); % we may not need this
-        epoch.addProperty('uniqueNumber', pds.unique_number(idx(n))); % maybe make an integer out of this array?
+        epoch.addProperty('uniqueNumber', NumericData(int32(pds.unique_number(idx(n)))));
+        epoch.addProperty('uniqueNumberString', num2str(pds.unique_number(idx(n))));
         epoch.addProperty('trialNumber', pds.trialnumber(idx(n)));
         epoch.addProperty('goodTrial', pds.goodtrial(idx(n))); % -1 for bad trials
         
