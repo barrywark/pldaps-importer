@@ -1,4 +1,4 @@
-classdef TestPDSImport < TestPladpsBase
+classdef TestPDSImport < TestPldapsBase
     
     properties
         pdsFile
@@ -10,35 +10,15 @@ classdef TestPDSImport < TestPladpsBase
     
     methods
         function self = TestPDSImport(name)
-            self = self@TestPladpsBase(name);
+            self = self@TestPldapsBase(name);
             
             import ovation.*;
-            
-            % This is our tie to the fixture
+           
+            % N.B. these value should match those in runtestsuite
             self.pdsFile = 'fixtures/pat120811a_decision2_16.PDS';
             self.plxFile = 'fixtures/pat120811a_decision2_1600matlabfriendlyPLX.mat';
-            
-            ctx = Ovation.connect(self.connection_file, self.username, self.password);
-            project = ctx.insertProject('TestImportMapping',...
-                'TestImportMapping',...
-                datetime());
-            
-            expt = project.insertExperiment('TestImportMapping',...
-                datetime());
-            source = ctx.insertSource('animal');
-            
             self.trialFunctionName = 'trial_function_name';
             self.timezone = 'America/New_York';
-            
-            
-            
-            % Import the PDS file
-            self.epochGroup = ImportPladpsPDS(expt,...
-                source,...
-                self.pdsFile,...
-                self.trialFunctionName,...
-                self.timezone,...
-                2); %TODO only import 2 trials for now
             
             
             % Import the plx file
@@ -47,11 +27,12 @@ classdef TestPDSImport < TestPladpsBase
         end
         
         function setUp(self)
-           setUp@TestPladpsBase(self);
+           setUp@TestPldapsBase(self);
            
            %TODO remove for real testing
            itr = self.context.query('EpochGroup', 'true');
            self.epochGroup = itr.next();
+           assertFalse(itr.hasNext());
         end
         
         % EpochGroup
