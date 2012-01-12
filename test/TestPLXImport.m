@@ -106,9 +106,9 @@ classdef TestPLXImport < TestPldapsBase
             end
         end
         
-        function testDerivedResponsesHaveDerivationParamters(self)
+        function testDerivedResponsesHaveAllDerivationParamtersFromEXPFIle(self)
             epochs = self.epochGroup.getEpochsUnsorted();
-            exp = exp = loadPLXExpFile(self.plxExpFile);
+            exp = loadPLXExpFile(self.plxExpFile);
             
             for i = 1:length(epochs)
                 epoch = epochs(i);
