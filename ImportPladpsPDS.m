@@ -1,22 +1,22 @@
 function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction, timezone)
-% Import PL-DA-PS PDS structural data into an Ovation Experiment
-%
-%    epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, 
-%                                 trialFunction, timezone)
-%
-%      experiment: ovation.Experiment or ovation.EpochGroup object. A
-%      new EpochGroup for this PDS data will be added to the given
-%      experiment.
-%
-%      animal: ovation.Source. The Source for the newly added
-%      EpochGroup.
-%
-%      pdsfile: path to .PDS file
-%
-%      trialFunction: PLDAPS trial function name
-%
-%      timezone: name of the time zone (e.g. 'America/New_York') where
-%      the experiment was performed
+    % Import PL-DA-PS PDS structural data into an Ovation Experiment
+    %
+    %    epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, 
+    %                                 trialFunction, timezone)
+    %
+    %      experiment: ovation.Experiment or ovation.EpochGroup object. A
+    %      new EpochGroup for this PDS data will be added to the given
+    %      experiment.
+    %
+    %      animal: ovation.Source. The Source for the newly added
+    %      EpochGroup.
+    %
+    %      pdsfile: path to .PDS file
+    %
+    %      trialFunction: PLDAPS trial function name
+    %
+    %      timezone: name of the time zone (e.g. 'America/New_York') where
+    %      the experiment was performed
     
     import ovation.*;
     
@@ -43,21 +43,6 @@ function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction
     
 end
 
-function s = convertNumericDataInStruct(inStruct)
-% Convert arrays and matricies in inStruct to NumericData objects.
-
-    import ovation.*;
-    fnames = fieldnames(inStruct);
-    for i = 1:length(fnames)
-       if(isnumeric(inStruct.(fnames{i})) && numel(inStruct.(fnames{i})) > 1)
-           data = inStruct.(fnames{i});
-           s.(fnames{i}) = NumericData(reshape(data, 1, numel(data)), size(data));
-       else
-           s.(fnames{i}) = inStruct.(fnames{i});
-       end
-    end
-end
-
 function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devices)
     import ovation.*;
     
@@ -65,6 +50,7 @@ function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devic
     previousEpoch = [];
     for n=1:length(times)
         disp(['    ' num2str(n) ' of ' num2str(length(times)) '...']);
+        
         
         protocol_parameters = convertNumericDataInStruct(parameters(idx(n)));
         protocol_parameters.target1_XY_deg_visual_angle = pds.targ1XY(idx(n));
@@ -133,6 +119,7 @@ function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devic
         epoch.addTimelineAnnotation('time of reward',...
             'reward',...
             epoch.getStartTime().plusSeconds(pds.timereward(idx(n))));
+        
     end
 end
 
