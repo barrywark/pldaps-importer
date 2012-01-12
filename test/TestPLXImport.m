@@ -61,7 +61,7 @@ classdef TestPLXImport < TestPldapsBase
             epoch = findEpochByUniqueNumber(self.epochGroup, unum);
             assertFalse(isempty(epoch));
             epochUnum = epoch.getMyProperty('uniqueNumber').getIntegerData();
-            assertEquals(mod(epochUnum, 256), unum);
+            assertTrue(all(mod(epochUnum, 256) == unum));
         end
         
         function testShouldHaveSpikeTimesForEachUnit(self)

@@ -35,6 +35,11 @@ function ImportPLX(epochGroup, plxFile, expFile, plexonDevice)
             for c = 2:maxChannels
                 % First unit (column) is unsorted
                 for u = 2:maxUnits
+                    
+                    if(isempty(spike_times{c,u}))
+                        continue;
+                    end
+                    
                     derivedResponseName = ['spikeTimes_channel_' num2str(c-1) '_unit_' num2str(u-1)];
                     
                     j = 1;
@@ -65,6 +70,11 @@ function ImportPLX(epochGroup, plxFile, expFile, plexonDevice)
             for c = 2:maxChannels
                 % First unit (column) is unsorted
                 for u = 2:maxUnits
+                    
+                    if(isempty(spike_waveforms{c,u}))
+                        continue;
+                    end
+                    
                     derivedResponseName = ['spikeWaveforms_channel_' num2str(c-1) '_unit_' num2str(u-1)];
                     
                     waveformData = spike_waveforms{c,u};
