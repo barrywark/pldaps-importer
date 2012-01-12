@@ -1,4 +1,4 @@
-classdef TestImport < TestPladps
+classdef TestImport < TestPladpsBase
     
     properties
         pdsFile
@@ -7,7 +7,7 @@ classdef TestImport < TestPladps
     
     methods
         function self = TestImport(name)
-             self = self@TestPladps(name);
+            self = self@TestPladpsBase(name);
         end
         
         function TestImportMapping(self)
@@ -27,8 +27,8 @@ classdef TestImport < TestPladps
             trialFunctionName = 'trial_function_name';
             timezone = 'America/New_York';
             epochGroup = ImportPladpsPDS(expt,...
-                self.pdsFile,...
                 source,...
+                self.pdsFile,...
                 trialFunctionName,...
                 timezone);
             

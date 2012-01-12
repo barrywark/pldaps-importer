@@ -1,11 +1,11 @@
-classdef TestPladps < TestCase
+classdef TestPladpsBase < TestCase
     properties
         context
         connection_file
     end
     
     methods
-        function self = TestPladps(name)
+        function self = TestPladpsBase(name)
              self = self@TestCase(name);
         end
 
@@ -48,7 +48,7 @@ classdef TestPladps < TestCase
 
         function tearDown(self)
             self.context.close();
-            ovation.util.deleteLocalOvationDatabase(self.connection_file);
+            ovation.util.deleteLocalOvationDatabase(self.connection_file, true);
             disp('Called tearDown');
         end
 

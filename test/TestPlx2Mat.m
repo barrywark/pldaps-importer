@@ -1,7 +1,7 @@
-classdef TestPlx2Mat < TestPladps
+classdef TestPlx2Mat < TestPladpsBase
     methods
         function self = TestPlx2Mat(name)
-             self = self@TestPladps(name);
+             self = self@TestPladpsBase(name);
         end
     end
 end

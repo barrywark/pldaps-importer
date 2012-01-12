@@ -1,6 +1,8 @@
 *~
 .DS_Store
 
+test/ovation
+
 # Objy
 *.boot
 *.fdb
