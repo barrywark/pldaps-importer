@@ -44,7 +44,7 @@ Automated tests
 To run the automated test suite:
 
 #. Add ``pldaps-importer`` folder to the Matlab path
-#. Add Matlab xUnit (``pldaps-importer/matlab-xunit``) to the Matlab path
+#. Add Matlab xUnit (``pldaps-importer/matlab-xunit-doctest/xunit``) to the Matlab path
 #. From within the ``pldaps-importer/test`` directory::
     
     >> runtestsuite
