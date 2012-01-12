@@ -34,7 +34,7 @@ To use the importer:
     >> ImportPladpsPlx(epochGroup,...
         <path to Matlab plx data>);
 
-.. Note:: This step will fail if ``Epochs`` in the plexon data are not already represented by ``Epoch`` instances in the Ovaiton database.
+This step will fail if ``Epochs`` in the plexon data are not already represented by ``Epoch`` instances in the Ovaiton database.
 
 
 
