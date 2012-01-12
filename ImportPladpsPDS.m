@@ -42,7 +42,7 @@ function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction
     [times, idx] = generateStartAndEndTimes(pds.unique_number, pds.eyepos, timezone);
     
     %% Insert one epochGroup per PDS file
-    epochGroup = experiment.insertEpochGroup(animal, pdsfile, times{1}.starttime, times{end}.endtime);
+    epochGroup = experiment.insertEpochGroup(animal, trialFunction, times{1}.starttime, times{end}.endtime);
     insertEpochs(idx, epochGroup, trialFunction, pds, times, repmat(c1,length(pds.unique_number),1), devices, ntrials); %TODO c1 should be a struct array, but we're faking it
     
 end
