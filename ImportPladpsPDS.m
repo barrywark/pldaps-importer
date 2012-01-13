@@ -30,11 +30,11 @@ function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction
     pds = pdsFileStruct.PDS;
     c1 = pdsFileStruct.c1;
     
-    devices.psychToolbox = experiment.insertExternalDevice('PsychToolbox', 'Huk lab');
-    devices.datapixx = experiment.insertExternalDevice('DataPixx', 'FIXME');% what to do here
-    devices.plexon = experiment.insertExternalDevice('Plexon', 'FIXME');
-    devices.eye_tracker = experiment.insertExternalDevice('FIXME', 'FIXME'); % TODO
-    devices.eye_tracker_timer = experiment.insertExternalDevice('FIXME2', 'FIXME2'); %TODO
+    devices.psychToolbox = experiment.externalDevice('PsychToolbox', 'Huk lab');
+    devices.datapixx = experiment.externalDevice('DataPixx', 'FIXME');% what to do here
+    devices.plexon = experiment.externalDevice('Plexon', 'FIXME');
+    devices.eye_tracker = experiment.externalDevice('FIXME', 'FIXME'); % TODO
+    devices.eye_tracker_timer = experiment.externalDevice('FIXME2', 'FIXME2'); %TODO
     
     % generate the start and end times for each epoch, from the unique_number and
     % timezone
@@ -160,7 +160,11 @@ function addResponseAndStimulus(epoch, trialFunction, eye_position_data, c1, dev
     samplingRateUnits{1} = 'Hz';
     samplingRateUnits{2} = 'N/A';
     
-    sampling_rate = (length(eye_position_data) -1)/(eye_position_data(end, 3) - eye_position_data(1, 3));% how to do sampling rate calculation
+	
+	% eye_position_data(:,3) are sample times in seconds. We estimate a
+	% single sample rate for eye position data by taking the reciprocal of
+	% the median inter-sample difference.
+    sampling_rate = 1 / median(diff(eye_position_data(:,3)));
     
     epoch.insertStimulus(devices.psychToolbox,...
         stimulusDeviceParams,...
