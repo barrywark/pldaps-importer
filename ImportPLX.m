@@ -1,4 +1,4 @@
-function ImportPLX(epochGroup, plxFile, plxRawFile, expFile, ntrials)
+function ImportPLX(epochGroup, plxFile, plxRawFile, expFile, varargin)
     % Import Plexon data into an existing PL-DA-PS PDS EpochGroup
     %
     %    ImportPLX(epochGroup, plxFile, plxRawFile, expFile)
@@ -14,9 +14,11 @@ function ImportPLX(epochGroup, plxFile, plxRawFile, expFile, ntrials)
     %      expFile: Path to a spike sorter .exp file with parameters for
     %      the spike sorting in plxFile.
     
-    nargchk(3, 4, nargin); %#ok<NCHKI>
-    if(nargin < 4)
+    nargchk(3, 5, nargin); %#ok<NCHKI>
+    if(nargin < 5)
         ntrials = [];
+    else
+        ntrials = varargin{1};
     end
     
     import ovation.*
