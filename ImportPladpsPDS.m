@@ -30,11 +30,11 @@ function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction
     pds = pdsFileStruct.PDS;
     c1 = pdsFileStruct.c1;
     
-    devices.psychToolbox = experiment.insertExternalDevice('PsychToolbox', 'Huk lab');
-    devices.datapixx = experiment.insertExternalDevice('DataPixx', 'FIXME');% what to do here
-    devices.plexon = experiment.insertExternalDevice('Plexon', 'FIXME');
-    devices.eye_tracker = experiment.insertExternalDevice('FIXME', 'FIXME'); % TODO
-    devices.eye_tracker_timer = experiment.insertExternalDevice('FIXME2', 'FIXME2'); %TODO
+    devices.psychToolbox = experiment.externalDevice('PsychToolbox', 'Huk lab');
+    devices.datapixx = experiment.externalDevice('DataPixx', 'FIXME');% what to do here
+    devices.plexon = experiment.externalDevice('Plexon', 'FIXME');
+    devices.eye_tracker = experiment.externalDevice('FIXME', 'FIXME'); % TODO
+    devices.eye_tracker_timer = experiment.externalDevice('FIXME2', 'FIXME2'); %TODO
     
     % generate the start and end times for each epoch, from the unique_number and
     % timezone
