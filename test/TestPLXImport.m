@@ -47,10 +47,28 @@ classdef TestPLXImport < TestPldapsBase
             self.plx = plxStruct.plx;
         end
         
-        % These are for plx import
-        %  - should have spike times t0 < ts <= end_trial
-        %  - should have same number of wave forms
         
+        function testShouldAppendPLXFile(self)
+            self.assertFileResource(self.epochGroup, self.plxFile);
+        end
+        
+        function testShouldAppendEXPFile(self)
+            self.assertFileResource(self.epochGroup, self.plxExpFile);
+        end
+        
+        function assertFileResource(~, target, name)
+            [~,name,ext]=fileparts(name);
+            name = [name ext];
+            names = target.getResourceNames();
+            found = false;
+            for i = 1:length(names)
+                if(names(i).equals(name))
+                    found = true;
+                end
+            end
+            
+            assertTrue(found);
+        end
         
         function testFindEpochGivesNullForNullEpochGroup(~)
             assertTrue(isempty(findEpochByUniqueNumber([], [1,2])));

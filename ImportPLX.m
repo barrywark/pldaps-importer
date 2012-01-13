@@ -123,4 +123,10 @@ function ImportPLX(epochGroup, plxFile, expFile)
             end
         end
     end
+    
+    disp('Attaching .plx file...');
+    epochGroup.addResource('com.plexon.plx', plxFile);
+    
+    disp('Attaching .exp file...');
+    epochGroup.addResource('com.plexon.exp', expFile);
 end
