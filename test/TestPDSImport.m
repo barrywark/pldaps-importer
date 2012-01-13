@@ -36,10 +36,11 @@ classdef TestPDSImport < TestPldapsBase
         end
         
         % EpochGroup
-        %  - should have trial function name as group label
-        %  - should have PDS start time
+        %  ? should have trial function name as group label
+        %  ? should have PDS start time
         %  - should have next/prev links for all epochs in group
         %  - should have original plx file attached as Resource
+        %  - should have PLX exp file attached as Resource
         % For each Epoch
         %  - should have trial function name as protocol ID
         %  - should have parameters from c1, PDS
@@ -56,10 +57,11 @@ classdef TestPDSImport < TestPldapsBase
         %  - should have spike times t0 < ts <= end_trial
         %  - should have same number of wave forms
         
+        function testEpochsShouldHaveNextPrevLinksWhenConsecutive(self)
+            assertTrue(false);
+        end
         
         function testShouldUseTrialFunctionNameAsEpochGroupLabel(self)
-            % Import should use trialFunctionName as inserted EpochGroup
-            % label.
             
             assertTrue(self.epochGroup.getLabel().equals(java.lang.String(self.trialFunctionName)));
             

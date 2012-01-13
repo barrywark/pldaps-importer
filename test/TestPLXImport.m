@@ -3,6 +3,7 @@ classdef TestPLXImport < TestPldapsBase
     properties
         pdsFile
         plxFile
+        plxRawFile
         epochGroup
         trialFunctionName
         timezone
@@ -20,6 +21,7 @@ classdef TestPLXImport < TestPldapsBase
             % N.B. these value should match those in runtestsuite
             self.pdsFile = 'fixtures/pat120811a_decision2_16.PDS';
             self.plxFile = 'fixtures/pat120811a_decision2_1600matlabfriendlyPLX.mat';
+            self.plxRawFile = 'fixtures/pat120811a_decision2_1600.plx';
             self.plxExpFile = 'fixtures/pat120811a_decision2_1600plx.exp';
             self.trialFunctionName = 'trial_function_name';
             self.timezone = 'America/New_York';
@@ -49,7 +51,7 @@ classdef TestPLXImport < TestPldapsBase
         
         
         function testShouldAppendPLXFile(self)
-            self.assertFileResource(self.epochGroup, self.plxFile);
+            self.assertFileResource(self.epochGroup, self.plxRawFile);
         end
         
         function testShouldAppendEXPFile(self)
