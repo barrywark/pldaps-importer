@@ -160,7 +160,11 @@ function addResponseAndStimulus(epoch, trialFunction, eye_position_data, c1, dev
     samplingRateUnits{1} = 'Hz';
     samplingRateUnits{2} = 'N/A';
     
-    sampling_rate = (length(eye_position_data) -1)/(eye_position_data(end, 3) - eye_position_data(1, 3));% how to do sampling rate calculation
+	
+	% eye_position_data(:,3) are sample times in seconds. We estimate a
+	% single sample rate for eye position data by taking the reciprocal of
+	% the median inter-sample difference.
+    sampling_rate = 1 / median(diff(eye_position_data(:,3)));
     
     epoch.insertStimulus(devices.psychToolbox,...
         stimulusDeviceParams,...
