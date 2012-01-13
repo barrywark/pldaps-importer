@@ -20,7 +20,7 @@ function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction
     
     import ovation.*;
     
-    nargchk(5, 6, nargin);
+    nargchk(5, 6, nargin); %#ok<NCHKI>
     if(nargin < 6)
         ntrials = [];
     end
@@ -57,7 +57,9 @@ function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devic
     disp('Importing Epochs...');
     previousEpoch = [];
     for n=1:ntrials
-        disp(['    ' num2str(n) ' of ' num2str(length(times)) '...']);
+        if(mod(n,5) == 0)
+            disp(['    ' num2str(n) ' of ' num2str(ntrials) '...']);
+        end
         
         
         protocol_parameters = convertNumericDataInStruct(parameters(idx(n)));

@@ -1,7 +1,7 @@
-function ImportPLX(epochGroup, plxFile, expFile)
+function ImportPLX(epochGroup, plxFile, plxRawFile, expFile, ntrials)
     % Import Plexon data into an existing PL-DA-PS PDS EpochGroup
     %
-    %    ImportPLX(epochGroup, plxFile, expFile)
+    %    ImportPLX(epochGroup, plxFile, plxRawFile, expFile)
     %
     %      epochGroup: ovation.EpochGroup containing Epochs matching Plexon
     %      data.
@@ -9,8 +9,15 @@ function ImportPLX(epochGroup, plxFile, expFile)
     %      plxFile: Path to a Matlab .mat file produced by plx2mat from a Plexon .plx
     %      file.
     %
+    %      plxRawFile: Path to .plx file from wich plxFile was generated.
+    %
     %      expFile: Path to a spike sorter .exp file with parameters for
     %      the spike sorting in plxFile.
+    
+    nargchk(3, 4, nargin); %#ok<NCHKI>
+    if(nargin < 4)
+        ntrials = [];
+    end
     
     import ovation.*
     
@@ -31,11 +38,22 @@ function ImportPLX(epochGroup, plxFile, expFile)
     
     disp('Importing PLX data...');
     idx = find(plx.unique_number(:,1) > 0);
+    if(~isempty(ntrials))
+        idx = idx(1:ntrials);
+    end
+    uniqueNumberCache = [];
+    epIdx = 0;
+    nIdx = length(idx);
     for i = 1:length(idx)
-        disp(['    Epoch ' num2str(i) ' of ' num2str(length(idx))]);
+        if(mod(i,5) == 0)
+            disp(['    Epoch ' num2str(i) ' of ' num2str(nIdx)]);
+        end
         
-        epoch = findEpochByUniqueNumber(epochGroup,...
-            plx.unique_number(idx(i),:));
+        
+        [epoch,uniqueNumberCache,epIdx] = findEpochByUniqueNumber(epochGroup,...
+            plx.unique_number(idx(i),:),...
+            uniqueNumberCache,...
+            epIdx+1);
         
         if(isempty(epoch))
             warning('ovation:import:plx:unique_number',...
@@ -123,4 +141,10 @@ function ImportPLX(epochGroup, plxFile, expFile)
             end
         end
     end
+    
+    disp('Attaching .plx file...');
+    epochGroup.addResource('com.plexon.plx', plxRawFile);
+    
+    disp('Attaching .exp file...');
+    epochGroup.addResource('com.plexon.exp', expFile);
 end

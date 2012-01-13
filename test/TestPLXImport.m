@@ -3,6 +3,7 @@ classdef TestPLXImport < TestPldapsBase
     properties
         pdsFile
         plxFile
+        plxRawFile
         epochGroup
         trialFunctionName
         timezone
@@ -20,6 +21,7 @@ classdef TestPLXImport < TestPldapsBase
             % N.B. these value should match those in runtestsuite
             self.pdsFile = 'fixtures/pat120811a_decision2_16.PDS';
             self.plxFile = 'fixtures/pat120811a_decision2_1600matlabfriendlyPLX.mat';
+            self.plxRawFile = 'fixtures/pat120811a_decision2_1600.plx';
             self.plxExpFile = 'fixtures/pat120811a_decision2_1600plx.exp';
             self.trialFunctionName = 'trial_function_name';
             self.timezone = 'America/New_York';
@@ -47,10 +49,28 @@ classdef TestPLXImport < TestPldapsBase
             self.plx = plxStruct.plx;
         end
         
-        % These are for plx import
-        %  - should have spike times t0 < ts <= end_trial
-        %  - should have same number of wave forms
         
+        function testShouldAppendPLXFile(self)
+            self.assertFileResource(self.epochGroup, self.plxRawFile);
+        end
+        
+        function testShouldAppendEXPFile(self)
+            self.assertFileResource(self.epochGroup, self.plxExpFile);
+        end
+        
+        function assertFileResource(~, target, name)
+            [~,name,ext]=fileparts(name);
+            name = [name ext];
+            names = target.getResourceNames();
+            found = false;
+            for i = 1:length(names)
+                if(names(i).equals(name))
+                    found = true;
+                end
+            end
+            
+            assertTrue(found);
+        end
         
         function testFindEpochGivesNullForNullEpochGroup(~)
             assertTrue(isempty(findEpochByUniqueNumber([], [1,2])));
