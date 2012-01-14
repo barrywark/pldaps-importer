@@ -1,8 +1,13 @@
-function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction, timezone,  ntrials)
+function epochGroup = ImportPladpsPDS(experiment,...
+                                      animal,...
+                                      pdsfile,...
+                                      timezone,...
+                                      ntrials)
     % Import PL-DA-PS PDS structural data into an Ovation Experiment
     %
-    %    epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, 
+    %    epochGroup = ImportPladpsPDS(context, experiment, animal, pdsfile, 
     %                                 trialFunction, timezone)
+    %      context: context with which to find the experiment
     %
     %      experiment: ovation.Experiment or ovation.EpochGroup object. A
     %      new EpochGroup for this PDS data will be added to the given
@@ -13,28 +18,32 @@ function epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, trialFunction
     %
     %      pdsfile: path to .PDS file
     %
-    %      trialFunction: PLDAPS trial function name
-    %
     %      timezone: name of the time zone (e.g. 'America/New_York') where
     %      the experiment was performed
     
     import ovation.*;
     
-    nargchk(5, 6, nargin); %#ok<NCHKI>
-    if(nargin < 6)
+    nargchk(4, 5, nargin); %#ok<NCHKI>
+    if(nargin < 4)
         ntrials = [];
     end
+    
     
     %validate(); -makes sure the properties have the right length, etc
     pdsFileStruct = load('-mat', pdsfile);
     pds = pdsFileStruct.PDS;
     c1 = pdsFileStruct.c1;
     
+    [~, trialFunction, ~] = fileparts(pdsfile);
+    
     devices.psychToolbox = experiment.insertExternalDevice('PsychToolbox', 'Huk lab');
-    devices.datapixx = experiment.insertExternalDevice('DataPixx', 'FIXME');% what to do here
-    devices.plexon = experiment.insertExternalDevice('Plexon', 'FIXME');
-    devices.eye_tracker = experiment.insertExternalDevice('FIXME', 'FIXME'); % TODO
-    devices.eye_tracker_timer = experiment.insertExternalDevice('FIXME2', 'FIXME2'); %TODO
+    devices.psychToolbox.addProperty('psychtoolbox version', '3.0.8');
+    devices.psychToolbox.addProperty('matlab version', 'R2009a 32bit');
+    devices.datapixx = experiment.insertExternalDevice('DataPixx', 'VPixx Technologies');
+    devices.monitor = experiment.insertExternalDevice('Monitor LH 1080p', 'LG');
+    devices.monitor.addProperty('resolution', NumericData([1920, 1080]));
+    devices.eye_tracker = experiment.insertExternalDevice('Eye Trac 6000', 'ASL');
+    devices.eye_tracker_timer = experiment.insertExternalDevice('Windows', 'Microsoft');
     
     % generate the start and end times for each epoch, from the unique_number and
     % timezone
@@ -61,12 +70,11 @@ function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devic
             disp(['    ' num2str(n) ' of ' num2str(ntrials) '...']);
         end
         
-        
         protocol_parameters = convertNumericDataInStruct(parameters(idx(n)));
         protocol_parameters.target1_XY_deg_visual_angle = pds.targ1XY(idx(n));
         protocol_parameters.target2_XY_deg_visual_angle = pds.targ2XY(idx(n));
         protocol_parameters.coherence = pds.coherence(idx(n));
-        protocol_parameters.fp2_XY_deg_visual_angle = pds.fp2XY(idx(n)); %is there an fp1XY and an fp2on?
+        protocol_parameters.fp2_XY_deg_visual_angle = pds.fp2XY(idx(n));
         protocol_parameters.inReceptiveField = pds.inRF(idx(n));
         
         epoch = epochGroup.insertEpoch(times{n}.starttime,...
@@ -78,20 +86,19 @@ function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devic
         epoch.addProperty('uniqueNumber', NumericData(int32(pds.unique_number(idx(n),:))));
         epoch.addProperty('uniqueNumberString', num2str(pds.unique_number(idx(n),:)));
         epoch.addProperty('trialNumber', pds.trialnumber(idx(n)));
-        epoch.addProperty('goodTrial', pds.goodtrial(idx(n))); % -1 for bad trials
+        epoch.addProperty('goodTrial', pds.goodtrial(idx(n)));
         
         % These are more like DerivedResponses...
         epoch.addProperty('coherence', pds.coherence(idx(n)));
-        epoch.addProperty('chooseRF', pds.chooseRF(idx(n))); % add additional information as to right/left?
+        epoch.addProperty('chooseRF', pds.chooseRF(idx(n)));
         epoch.addProperty('timeOfChoice', pds.timechoice(idx(n)));
         epoch.addProperty('timeOfReward', pds.timereward(idx(n)));
         epoch.addProperty('timeBrokeFixation', pds.timebrokefix(idx(n)));
-        epoch.addProperty('correct', pds.correct(idx(n))); % should be a tag
+        epoch.addProperty('correct', pds.correct(idx(n))); 
         
         previousEpoch = setPreviousEpoch(epoch, previousEpoch, pds, n);
         
-        addResponseAndStimulus(epoch, protocolID, pds.eyepos{idx(n)}, parameters(idx(n)), devices);
-        
+        addResponseAndStimulus(epoch, protocolID, pds.eyepos{idx(n)}, parameters(idx(n)), devices, n);       
         
         epoch.addTimelineAnnotation('fixation point 1 on',...
             'fixationPoint1',...
@@ -135,24 +142,21 @@ function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devic
 end
 
 function previousEpoch = setPreviousEpoch(epoch, previousEpoch, pds, n)
-    if (~ isempty(previousEpoch))
-        epoch.setPreviousEpoch(previousEpoch);
+    if (~ isempty(previousEpoch) )
+        if (previousEpoch.getMyProperty('trialNumber') +1) == epoch.getMyProperty('trialNumber')
+            epoch.setPreviousEpoch(previousEpoch);
+        end
     end
-    if (n>1 && (pds.trialnumber(n-1) + 1) == pds.trialnumber(n))
-        previousEpoch = epoch;
-    else
-        previousEpoch = [];
-    end
+    
+    previousEpoch = epoch;
+    
 end
 
-function addResponseAndStimulus(epoch, trialFunction, eye_position_data, c1, devices)
+function addResponseAndStimulus(epoch, trialFunction, eye_position_data, c1, devices, epochNumber)
     import ovation.*;
     
-    stimulusDeviceParams = struct2map(convertNumericDataInStruct(c1)); % which of these are also stimulus params?
-    responseDeviceParams = struct2map(convertNumericDataInStruct(c1)); % which of these are also response params?
-    
-    stimulusParameters = convertNumericDataInStruct(c1); % which of these are stimulus params?
-    %TODO events;
+    stimulusDeviceParams = struct2map(convertNumericDataInStruct(c1)); % divide the c1 file into device parameters
+    stimulusParameters = struct2map(convertNumericDataInStruct(c1)); % and stimulus parameters
     
     dimensionLabels{1} = 'time';
     dimensionLabels{2} = 'X-Y';
@@ -160,22 +164,22 @@ function addResponseAndStimulus(epoch, trialFunction, eye_position_data, c1, dev
     samplingRateUnits{1} = 'Hz';
     samplingRateUnits{2} = 'N/A';
     
-    sampling_rate = (length(eye_position_data) -1)/(eye_position_data(end, 3) - eye_position_data(1, 3));% how to do sampling rate calculation
+    sampling_rate = (length(eye_position_data) -1)/(eye_position_data(end, 3) - eye_position_data(1, 3));
     
     epoch.insertStimulus(devices.psychToolbox,...
         stimulusDeviceParams,...
         ['edu.utexas.huk.pladapus.' trialFunction],...
-        struct2map(stimulusParameters),...
-        'pixels',... %TODO units??
-        dimensionLabels);
+        stimulusParameters,...
+        'degrees of visual angle',... 
+        []);
     
     data = NumericData(reshape(eye_position_data(:,1:2),1, numel(eye_position_data(:,1:2))),...
         size(eye_position_data(:,1:2)));
     
     epoch.insertResponse(devices.eye_tracker,...
-        responseDeviceParams,...
+        [],...
         data,...
-        'pixels',... % what units are the eye
+        'degrees of visual angle',...
         dimensionLabels,...
         [sampling_rate, 1],...
         samplingRateUnits,...
@@ -183,7 +187,7 @@ function addResponseAndStimulus(epoch, trialFunction, eye_position_data, c1, dev
     
     data = NumericData(eye_position_data(:,3));
     epoch.insertResponse(devices.eye_tracker_timer,...
-        responseDeviceParams,...
+        [],...
         data,...
         's',...
         'time',...
@@ -191,7 +195,15 @@ function addResponseAndStimulus(epoch, trialFunction, eye_position_data, c1, dev
         'N/A',...
         'edu.utexas.huk.eye_position_sample_time');
     
-    % Ditto for columns 4,5, and 6
+    data = NumericData(eye_position_data(:,4));
+    derivationParameters = struct(); %TODO: add derivation parameters, if any
+    epoch.insertDerivedResponse(['State measurements ' epochNumber],...
+        data,...
+        'N/A',...
+        struct2map(derivationParameters),...
+        'state');
+            
+    % Ditto for columns 5, and 6
     % Units? Labels? ...
     
 end
