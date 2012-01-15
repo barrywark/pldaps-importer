@@ -47,21 +47,23 @@ trialFunctionName = 'trial_function_name';
 timezone = 'America/New_York';
 
 
+warning('off', 'ovation:import:plx:unique_number');
 
 % Import the PDS file
+tic;
 epochGroup = ImportPladpsPDS(expt,...
     source,...
     pdsFile,...
-    timezone,...
-    25); %For testing, only 25 good epochs
+    trialFunctionName,...
+    timezone);
+    
 epochGroup.addResource('edu.utexas.huk.pds', pdsFile);
 
+tic;
 ImportPLX(epochGroup,...
     plxFile,...
     plxRawFile,...
-    plxExpFile,...
-    25); %For testing, only 25 good epochs
+    plxExpFile);
+toc;
 
-warning('off', 'ovation:import:plx:unique_number');
-
-runtests
+runtests -xmlfile test-output.xml
