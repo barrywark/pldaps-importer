@@ -66,4 +66,4 @@ ImportPLX(epochGroup,...
     plxExpFile);
 toc;
 
-runtests -xmlfile test-output.xml
+runtests -xmlfile matlab-tests.xml
