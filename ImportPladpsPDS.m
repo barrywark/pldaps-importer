@@ -5,8 +5,7 @@ function epochGroup = ImportPladpsPDS(experiment,...
                                       ntrials)
     % Import PL-DA-PS PDS structural data into an Ovation Experiment
     %
-    %    epochGroup = ImportPladpsPDS(context, experiment, animal, pdsfile, 
-    %                                 trialFunction, timezone)
+    %    epochGroup = ImportPladpsPDS(experiment, animal, pdsfile, timezone)
     %      context: context with which to find the experiment
     %
     %      experiment: ovation.Experiment or ovation.EpochGroup object. A
@@ -24,7 +23,7 @@ function epochGroup = ImportPladpsPDS(experiment,...
     import ovation.*;
     
     nargchk(4, 5, nargin); %#ok<NCHKI>
-    if(nargin < 4)
+    if(nargin < 5)
         ntrials = [];
     end
     
