@@ -47,10 +47,14 @@ function epochGroup = ImportPladpsPDS(experiment,...
     % generate the start and end times for each epoch, from the unique_number and
     % timezone
     
+    % TODO update this to use datapixx_startTime and datapixx_endTime, and
+    % add inter-trial epochs for blanks.
     [times, idx] = generateStartAndEndTimes(pds.unique_number, pds.eyepos, timezone);
     
     %% Insert one epochGroup per PDS file
     epochGroup = experiment.insertEpochGroup(animal, trialFunction, times{1}.starttime, times{end}.endtime);
+    
+    %% TODO We should be able to get times from pds directly; no generateStartAndEndTimes needed
     insertEpochs(idx, epochGroup, trialFunction, pds, times, repmat(c1,length(pds.unique_number),1), devices, ntrials); %TODO c1 should be a struct array, but we're faking it
     
 end
@@ -81,19 +85,19 @@ function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devic
             protocolID,...
             struct2map(protocol_parameters));
         
-        epoch.addProperty('datapixxtime', pds.datapixxtime(idx(n))); % we may not need this
+        epoch.addProperty('datapixxtime', pds.datapixxtime(idx(n)));
         epoch.addProperty('uniqueNumber', NumericData(int32(pds.unique_number(idx(n),:))));
         epoch.addProperty('uniqueNumberString', num2str(pds.unique_number(idx(n),:)));
         epoch.addProperty('trialNumber', pds.trialnumber(idx(n)));
         epoch.addProperty('goodTrial', pds.goodtrial(idx(n)));
         
         % These are more like DerivedResponses...
-        epoch.addProperty('coherence', pds.coherence(idx(n)));
+        epoch.addProperty('coherence', pds.coherence(idx(n))); % TODO Is this a protocol parameter?
         epoch.addProperty('chooseRF', pds.chooseRF(idx(n)));
         epoch.addProperty('timeOfChoice', pds.timechoice(idx(n)));
         epoch.addProperty('timeOfReward', pds.timereward(idx(n)));
         epoch.addProperty('timeBrokeFixation', pds.timebrokefix(idx(n)));
-        epoch.addProperty('correct', pds.correct(idx(n))); 
+        epoch.addProperty('correct', pds.correct(idx(n)));
         
         previousEpoch = setPreviousEpoch(epoch, previousEpoch, pds, n);
         
@@ -185,7 +189,7 @@ function addResponseAndStimulus(epoch, trialFunction, eye_position_data, c1, dev
         dimensionLabels,...
         [sampling_rate, 1],...
         samplingRateUnits,...
-        'edu.utexas.huk.eye_position');
+        'edu.utexas.huk.eye_position'); %TODO should be numeric data UTI
     
     data = NumericData(eye_position_data(:,3));
     epoch.insertResponse(devices.eye_tracker_timer,...
@@ -195,7 +199,7 @@ function addResponseAndStimulus(epoch, trialFunction, eye_position_data, c1, dev
         'time',...
         1,...
         'N/A',...
-        'edu.utexas.huk.eye_position_sample_time');
+        'edu.utexas.huk.eye_position_sample_time'); % TODO should be numeric data UTI?
     
     data = NumericData(eye_position_data(:,4));
     derivationParameters = struct(); %TODO: add derivation parameters, if any
