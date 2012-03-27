@@ -1,7 +1,10 @@
 function [times, idx] = generateStartAndEndTimes(macTimes, eyepos, timezone)
+    
     if (size(macTimes, 2) ~= 6) %throw error
-        
+        error('ovation:import:pds:date',...
+            'Expected 6-element unique numbers for conversion to date/time');
     end
+    
     import ovation.*
     
     idx = find(macTimes(:,1) ~= -1);

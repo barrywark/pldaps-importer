@@ -58,30 +58,27 @@ function ImportPLX(epochGroup, plxFile, plxRawFile, expFile, varargin)
 		
 		epoch = epochs(i);
 		% TODO this should use getProperty(getOwner)
-		vals = epoch.getProperty('uniqueNumber');
-		assert(length(vals) <= 1);
-		if(~isempty(vals))
-			epochUniqueNumber = vals(1).getIntegerData()';
+		epochUniqueNumber = epoch.getOwnerProperty('uniqueNumber');
+		if(~isempty(epochUniqueNumber))
+			epochUniqueNumber = epochUniqueNumber.getIntegerData()';
 		end
 		
 		epochCache.uniqueNumber.put(num2str(epochUniqueNumber), epoch);
 		epochCache.truncatedUniqueNumber.put(num2str(mod(epochUniqueNumber,256)),...
 			epoch);
 	end
-	
-	disp('Importing PLX data...');
-	idx = find(plx.unique_number(:,1) > 0);
-	if(~isempty(ntrials))
-		idx = idx(1:ntrials);
-	end
-	uniqueNumberCache = [];
-	epIdx = 0;
-	nIdx = length(idx);
-	
-	for i = 1:length(idx)
-		tstart = tic();
+    
+    disp('Importing PLX data...');
+    idx = find(plx.unique_number(:,1) > 0);
+    if(~isempty(ntrials))
+        idx = idx(1:ntrials);
+    end
+    
+    
+    for i = 1:length(idx)
+		%tstart = tic();
 		if(mod(i,5) == 0)
-			disp(['    Epoch ' num2str(i) ' of ' num2str(nIdx)]);
+			disp(['    Epoch ' num2str(i) ' of ' num2str(length(idx)]);
 		end
 		
 		
@@ -93,10 +90,11 @@ function ImportPLX(epochGroup, plxFile, plxRawFile, expFile, varargin)
 			warning('ovation:import:plx:unique_number',...
 				'PLX data appears to contain a unique number not present in the epoch group');
 			continue;
-		end
+        end
 		
+        % Add spike times DerivedResponse
 		if(~isempty(plx.spike_times{idx(i)}))
-			spike_times = plx.spike_times{idx(i)};
+			spike_times = plx.spike_times{idx(i)}; % We need to find spike times relative to expt start
 			[maxChannels,maxUnits] = size(spike_times);
 			
 			% First channel (row) is unsorted
@@ -130,8 +128,9 @@ function ImportPLX(epochGroup, plxFile, plxRawFile, expFile, varargin)
 						);
 				end
 			end
-		end
+        end
 		
+        % Add spike waveforms DerivedResponse
 		if(~isempty(plx.spike_waveforms{idx(i)}))
 			spike_waveforms = plx.spike_waveforms{idx(i)};
 			
@@ -173,9 +172,11 @@ function ImportPLX(epochGroup, plxFile, plxRawFile, expFile, varargin)
 						);
 				end
 			end
-		end
+        end
+        
+        % Add event TimelineAnnotations
 		
-		t = toc(tstart);
+		%t = toc(tstart);
 		%disp(['      ' num2str(t) ' seconds']);
 	end
 	
