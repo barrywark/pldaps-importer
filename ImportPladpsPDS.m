@@ -31,10 +31,12 @@ function epochGroup = ImportPladpsPDS(experiment,...
     %validate(); -makes sure the properties have the right length, etc
     pdsFileStruct = load('-mat', pdsfile);
     pds = pdsFileStruct.PDS;
-    c1 = pdsFileStruct.c1;
+    displayVariables = pdsFileStruct.dv;
     
     [~, trialFunction, ~] = fileparts(pdsfile);
     
+    
+    % External devices
     devices.psychToolbox = experiment.insertExternalDevice('PsychToolbox', 'Huk lab');
     devices.psychToolbox.addProperty('psychtoolbox version', '3.0.8');
     devices.psychToolbox.addProperty('matlab version', 'R2009a 32bit');
@@ -47,23 +49,39 @@ function epochGroup = ImportPladpsPDS(experiment,...
     % generate the start and end times for each epoch, from the unique_number and
     % timezone
     
-    % TODO update this to use datapixx_startTime and datapixx_endTime, and
-    % add inter-trial epochs for blanks.
-    [times, idx] = generateStartAndEndTimes(pds.unique_number, pds.eyepos, timezone);
+    firstEpochIdx = pds.datapixxstarttime == min(pds.datapixxstarttime);
+    firstEpochStart = uniqueNumberToDateTime(pds.unique_number(firstEpochIdx,:),...
+        timezone.getID());
+    
+    firstEpochDatapixxStart = pds.datapixxstarttime(firstEpochIdx);
+    
+    lastEpochIdx = pds.datapixxstoptime == max(pds.datapixxstoptime);
+    lastEpochDatapixxEnd = pds.datapixxstoptime(lastEpochIdx);
+    lastEpochEnd = firstEpochStart.plusMillis(...
+        1000 * (lastEpochDatapixxEnd - firstEpochDatapixxStart)...
+        );
+    
     
     %% Insert one epochGroup per PDS file
-    epochGroup = experiment.insertEpochGroup(animal, trialFunction, times{1}.starttime, times{end}.endtime);
+    epochGroup = experiment.insertEpochGroup(animal,...
+        trialFunction, ...
+        firstEpochStart,...
+        lastEpochEnd);
     
-    %% TODO We should be able to get times from pds directly; no generateStartAndEndTimes needed
-    insertEpochs(idx, epochGroup, trialFunction, pds, times, repmat(c1,length(pds.unique_number),1), devices, ntrials); %TODO c1 should be a struct array, but we're faking it
+    insertEpochs(epochGroup,...
+        trialFunction,...
+        pds,...
+        repmat(displayVariables,length(pds.unique_number),1),...
+        devices,...
+        ntrials); %TODO c1 should be a struct array, but we're faking it
     
 end
 
-function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devices, ntrials)
+function insertEpochs(epochGroup, protocolID, pds, parameters, devices, ntrials)
     import ovation.*;
     
     if(isempty(ntrials))
-        ntrials = length(times);
+        ntrials = length(pds);
     end
     
     disp('Importing Epochs...');
@@ -73,73 +91,84 @@ function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devic
             disp(['    ' num2str(n) ' of ' num2str(ntrials) '...']);
         end
         
-        protocol_parameters = parameters(idx(n));
-        protocol_parameters.target1_XY_deg_visual_angle = pds.targ1XY(idx(n));
-        protocol_parameters.target2_XY_deg_visual_angle = pds.targ2XY(idx(n));
-        protocol_parameters.coherence = pds.coherence(idx(n));
-        protocol_parameters.fp2_XY_deg_visual_angle = pds.fp2XY(idx(n));
-        protocol_parameters.inReceptiveField = pds.inRF(idx(n));
         
-        epoch = epochGroup.insertEpoch(times{n}.starttime,...
-            times{n}.endtime,...
+        dataPixxStart = pds.datapixxstarttime(n);
+        dataPixxEnd = pds.datapixxstoptime(n);
+        
+        %TODO check inter-trial interval
+        
+        protocol_parameters = parameters(n);
+        protocol_parameters.target1_XY_deg_visual_angle = pds.targ1XY(n);
+        protocol_parameters.target2_XY_deg_visual_angle = pds.targ2XY(n);
+        protocol_parameters.coherence = pds.coherence(n);
+        if(isfield(pds, 'fp2XY'))
+            protocol_parameters.fp2_XY_deg_visual_angle = pds.fp2XY(n);
+        end
+        protocol_parameters.inReceptiveField = pds.inRF(n);
+        
+        
+        
+        epoch = epochGroup.insertEpoch(epochGroup.getStartTime().plusMillis(dataPixxStart * 1000),...
+            epochGroup.getStartTime().plusMillis(dataPixxEnd * 1000),...
             protocolID,...
             struct2map(protocol_parameters));
         
-        epoch.addProperty('datapixxtime', pds.datapixxtime(idx(n)));
-        epoch.addProperty('uniqueNumber', NumericData(int32(pds.unique_number(idx(n),:))));
-        epoch.addProperty('uniqueNumberString', num2str(pds.unique_number(idx(n),:)));
-        epoch.addProperty('trialNumber', pds.trialnumber(idx(n)));
-        epoch.addProperty('goodTrial', pds.goodtrial(idx(n)));
+        epoch.addProperty('dataPixxStart_seconds', pds.datapixxstarttime(n));
+        epoch.addProperty('dataPixxEnd_seconds', pds.datapixxstoptime(n));
+        epoch.addProperty('uniqueNumber', NumericData(int32(pds.unique_number(n,:))));
+        epoch.addProperty('uniqueNumberString', num2str(pds.unique_number(n,:)));
+        epoch.addProperty('trialNumber', pds.trialnumber(n));
+        epoch.addProperty('goodTrial', pds.goodtrial(n));
         
         % These are more like DerivedResponses...
-        epoch.addProperty('coherence', pds.coherence(idx(n))); % TODO Is this a protocol parameter?
-        epoch.addProperty('chooseRF', pds.chooseRF(idx(n)));
-        epoch.addProperty('timeOfChoice', pds.timechoice(idx(n)));
-        epoch.addProperty('timeOfReward', pds.timereward(idx(n)));
-        epoch.addProperty('timeBrokeFixation', pds.timebrokefix(idx(n)));
-        epoch.addProperty('correct', pds.correct(idx(n)));
+        epoch.addProperty('coherence', pds.coherence(n)); % TODO Is this a protocol parameter?
+        epoch.addProperty('chooseRF', pds.chooseRF(n));
+        epoch.addProperty('timeOfChoice', pds.timechoice(n));
+        epoch.addProperty('timeOfReward', pds.timereward(n));
+        epoch.addProperty('timeBrokeFixation', pds.timebrokefix(n));
+        epoch.addProperty('correct', pds.correct(n));
         
         previousEpoch = setPreviousEpoch(epoch, previousEpoch, pds, n);
         
-        addResponseAndStimulus(epoch, protocolID, pds.eyepos{idx(n)}, parameters(idx(n)), devices, n);       
+        addResponseAndStimulus(epoch, protocolID, pds.eyepos{n}, parameters(n), devices, n);       
         
         epoch.addTimelineAnnotation('fixation point 1 on',...
             'fixationPoint1',...
-            epoch.getStartTime().plusSeconds(pds.fp1on(idx(n))),...
-            epoch.getStartTime().plusSeconds(pds.fp1off(idx(n))));
+            epoch.getStartTime().plusSeconds(pds.fp1on(n)),...
+            epoch.getStartTime().plusSeconds(pds.fp1off(n)));
         epoch.addTimelineAnnotation('fixation point 1 entered',...
             'fixationPoint1',...
-            epoch.getStartTime().plusSeconds(pds.fp1entered(idx(n))));
+            epoch.getStartTime().plusSeconds(pds.fp1entered(n)));
         
-        if(pds.timebrokefix(idx(n)) > 0)
+        if(pds.timebrokefix(n) > 0)
             epoch.addTimelineAnnotation('time broke fixation',...
                 'fixation',...
-                epoch.getStartTime().plusSeconds(pds.timebrokefix(idx(n))));
+                epoch.getStartTime().plusSeconds(pds.timebrokefix(n)));
         end
         epoch.addTimelineAnnotation('fixation point 2 off',...
             'fixationPoint2',...
-            epoch.getStartTime().plusSeconds(pds.fp2off(idx(n))));
-        if(pds.targoff(idx(n)) > 0)
+            epoch.getStartTime().plusSeconds(pds.fp2off(n)));
+        if(pds.targoff(n) > 0)
             epoch.addTimelineAnnotation('target on',...
                 'target',...
-                epoch.getStartTime().plusSeconds(pds.targon(idx(n))),...
-                epoch.getStartTime().plusSeconds(pds.targoff(idx(n))));
+                epoch.getStartTime().plusSeconds(pds.targon(n)),...
+                epoch.getStartTime().plusSeconds(pds.targoff(n)));
         else
             
             epoch.addTimelineAnnotation('target on',...
                 'target',...
-                epoch.getStartTime().plusSeconds(pds.targon(idx(n))));
+                epoch.getStartTime().plusSeconds(pds.targon(n)));
         end
         epoch.addTimelineAnnotation('dots on',...
             'dots',...
-            epoch.getStartTime().plusSeconds(pds.dotson(idx(n))),...
-            epoch.getStartTime().plusSeconds(pds.dotsoff(idx(n))));
+            epoch.getStartTime().plusSeconds(pds.dotson(n)),...
+            epoch.getStartTime().plusSeconds(pds.dotsoff(n)));
         epoch.addTimelineAnnotation('time of choice',...
             'choice',...
-            epoch.getStartTime().plusSeconds(pds.timechoice(idx(n))));
+            epoch.getStartTime().plusSeconds(pds.timechoice(n)));
         epoch.addTimelineAnnotation('time of reward',...
             'reward',...
-            epoch.getStartTime().plusSeconds(pds.timereward(idx(n))));
+            epoch.getStartTime().plusSeconds(pds.timereward(n)));
         
     end
 end

@@ -8,17 +8,21 @@ function runtestsuite(test_directory)
     % re-importing the test fixture data.
 
 
+    import org.joda.time.*;
+    
     % N.B. these values should match in TestPldapsBase
     connection_file = 'ovation/matlab_fd.connection';
     username = 'TestUser';
     password = 'password';
 
-    % We're tied to the test fixture defined by these files, but this is the
-    % only dependency. There shouldn't be any magic numbers in the test code.
-    pdsFile = 'fixtures/pat120811a_decision2_16.PDS';
-    plxFile = 'fixtures/pat120811a_decision2_1600matlabfriendlyPLX.mat';
-    plxRawFile = 'fixtures/pat120811a_decision2_1600.plx';
-    plxExpFile = 'fixtures/pat120811a_decision2_1600plx.exp';
+    % We're tied to the test fixture defined by these files and values, 
+    % but this is the only dependency. There shouldn't be any magic numbers
+    % in the test code.
+    pdsFile = 'fixtures/ovationtest032712revcodots1440.PDS';
+    plxFile = 'fixtures/ovationtest032712revcodots1440.MAT';
+    plxRawFile = 'fixtures/ovationtest032712revcodots1441.plx';
+    plxExpFile = 'fixtures/ovationtest032712revcodots1441.exp';
+    timezone = DateTimeZone.forID('US/Central');
 
     % Delete the test database if it exists
     if(exist(connection_file, 'file') ~= 0)
@@ -31,9 +35,9 @@ function runtestsuite(test_directory)
     connection_file = ovation.util.createLocalOvationDatabase('ovation', ...
     'matlab_fd',...
     username,...
-    password,...
-    'license.txt',...
-    'ovation-development');
+    password); %,...
+    %'license.txt',...
+    %'ovation-development');
     
     import ovation.*
     ctx = Ovation.connect(fullfile(pwd(),connection_file), username, password);
@@ -45,9 +49,6 @@ function runtestsuite(test_directory)
     datetime());
     source = ctx.insertSource('animal');
 
-    % N.B. these values should match in TestPDSImport
-    trialFunctionName = 'trial_function_name';
-    timezone = 'America/New_York';
 
 
     warning('off', 'ovation:import:plx:unique_number');
@@ -64,8 +65,7 @@ function runtestsuite(test_directory)
     tic;
     ImportPLX(epochGroup,...
     plxFile,...
-    plxRawFile,...
-    plxExpFile);
+    plxRawFile);
     toc;
 
     runtests(test_directory, '-xmlfile', 'test-output.xml');

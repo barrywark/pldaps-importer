@@ -15,10 +15,10 @@ classdef TestPDSImport < TestPldapsBase
             import ovation.*;
            
             % N.B. these value should match those in runtestsuite
-            self.pdsFile = 'fixtures/pat120811a_decision2_16.PDS';
-            self.plxFile = 'fixtures/pat120811a_decision2_1600matlabfriendlyPLX.mat';
-            self.trialFunctionName = 'pat120811a_decision2_16';
-            self.timezone = 'America/New_York';
+            self.pdsFile = 'fixtures/ovationtest032712revcodots1440.PDS';
+            self.plxFile = 'fixtures/fixtures/ovationtest032712revcodots1440.mat';
+            self.trialFunctionName = 'ovationtest032712revcodots1440';
+            self.timezone = DateTimeZone.forID('US/Central');
             
             
             % Import the plx file
@@ -38,6 +38,7 @@ classdef TestPDSImport < TestPldapsBase
         % EpochGroup
         %  - should have correct trial function name as group label
         %  - should have PDS start time
+        %  x should have PDS start time + last datapixxendtime seconds
         %  - should have original plx file attached as Resource
         %  - should have PLX exp file attached as Resource
         % For each Epoch

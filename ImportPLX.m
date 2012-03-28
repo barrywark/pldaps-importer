@@ -1,4 +1,4 @@
-function ImportPLX(epochGroup, plxFile, plxRawFile, expFile, varargin)
+function ImportPLX(epochGroup, plxFile, plxRawFile, varargin)
 	% Import Plexon data into an existing PL-DA-PS PDS EpochGroup
 	%
 	%    ImportPLX(epochGroup, plxFile, plxRawFile, expFile)
@@ -10,9 +10,6 @@ function ImportPLX(epochGroup, plxFile, plxRawFile, expFile, varargin)
 	%      file.
 	%
 	%      plxRawFile: Path to .plx file from wich plxFile was generated.
-	%
-	%      expFile: Path to a spike sorter .exp file with parameters for
-	%      the spike sorting in plxFile.
 	
 	nargchk(4, 6, nargin); %#ok<NCHKI>
 	if(nargin < 6)
@@ -31,12 +28,6 @@ function ImportPLX(epochGroup, plxFile, plxRawFile, expFile, varargin)
 	drSuffix = [num2str(expModificationDate.getYear()) '-' ...
 		num2str(expModificationDate.getMonthOfYear()) '-'...
 		num2str(expModificationDate.getDayOfMonth())];
-	
-	
-	%TODO: derivationParameters
-	%     derivationParameters = struct2map(...
-	%         convertNumericDataInStruct(...
-	%         loadPLXExpFile(expFile)));
 	
 	lines = ovation.util.read_lines(expFile);
 	expTxt = lines{1};

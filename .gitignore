@@ -6,6 +6,8 @@ test-output.xml
 
 # Objy
 *.boot
+*.connection
+*.DB
 *.fdb
 *.ap
 
