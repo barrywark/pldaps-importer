@@ -73,7 +73,7 @@ function insertEpochs(idx, epochGroup, protocolID, pds, times, parameters, devic
             disp(['    ' num2str(n) ' of ' num2str(ntrials) '...']);
         end
         
-        protocol_parameters = convertNumericDataInStruct(parameters(idx(n)));
+        protocol_parameters = parameters(idx(n));
         protocol_parameters.target1_XY_deg_visual_angle = pds.targ1XY(idx(n));
         protocol_parameters.target2_XY_deg_visual_angle = pds.targ2XY(idx(n));
         protocol_parameters.coherence = pds.coherence(idx(n));
@@ -158,8 +158,8 @@ end
 function addResponseAndStimulus(epoch, trialFunction, eye_position_data, c1, devices, epochNumber)
     import ovation.*;
     
-    stimulusDeviceParams = struct2map(convertNumericDataInStruct(c1)); % divide the c1 file into device parameters
-    stimulusParameters = struct2map(convertNumericDataInStruct(c1)); % and stimulus parameters
+    stimulusDeviceParams = struct2map(c1); % TODO divide the c1 file into device parameters
+    stimulusParameters = struct2map(c1); % and stimulus parameters
     
     dimensionLabels{1} = 'time';
     dimensionLabels{2} = 'X-Y';
