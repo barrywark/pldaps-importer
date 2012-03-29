@@ -44,10 +44,11 @@ classdef TestPDSImport < TestPldapsBase
         %  - should have PLX exp file attached as Resource
         % For each Epoch
         %  - should have trial function name as protocol ID
-        %  x should have parameters from dv, PDS
-        %  x should have duration equal to datapixx start - datapixx end
-        %  x should have sequential unique identifier with prev/next 
-        %  x should have next/pre if next/prev epochs were recorded, respectively
+        %  x should have protocol parameters from dv, PDS
+        %  - should have start and end time defined by datapixx
+        %  - should have sequential time with prev/next 
+        %  - should have next/pre
+        %    - intertrial Epochs should interpolate
         %  x should have approparite stimuli and responses
         % For each stimulus
         %  x should have correct plugin ID (TBD)
@@ -59,26 +60,52 @@ classdef TestPDSImport < TestPldapsBase
         %  - should have same number of wave forms
         
         function testEpochsShouldHaveNextPrevLinksWhenConsecutive(self)
-            import java.util.HashSet
-            trialNumbers = HashSet();
+            
             epochs = self.epochGroup.getEpochs();
-            for n=1:length(epochs)
-                trialNums = epochs(n).getProperty('trialNumber');
-                trialNum = trialNums(1);
-                trialNumbers.add(trialNum); %contains all the trial numbers for the epochs
-            end
-            for n=1:length(epochs)
-                current = epochs(n);
-                currentNums = current.getProperty('trialNumber');
-                currentNum = currentNums(1);
-                
-                next = current.getNextEpoch();
-                if ~ isempty(next)
-                    nextNumbers = next.getProperty('trialNumber');
-                    nextNumber = nextNumbers(1);
-                    assert(nextNumber == currentNum + 1)
+            
+            for i = 1:length(epochs)
+                prev = epochs(i).getPreviousEpoch();
+                assert(~isempty(prev));
+                if(strfind(epochs(i).getProtocolID(), 'intertrial'))
+                    assertFalse(strfind(prev.getProtocolID(),'intertrial'));
+                    assertFalse(isempty(prev.getOwnerProperty('trialNumber')));
                 else
-                    assert( ~trialNumbers.contains(currentNum +1));
+                    assertTrue(strfind(prev.getProtocolID(),'intertrial'));
+                end
+                
+            end
+        end
+        
+        function testEpochsShouldBeSequentialInTime(self)
+            epochs = self.epochGroup.getEpochs()
+            
+            for i = 2:length(epochs)
+                assertJavaEqual(epochs(i).getPreviousEpoch(),...
+                    epochs(i-1));
+            end
+        end
+               
+        function testEpochStartAndEndTimeShouldBeDeterminedByDataPixxTime(self)
+            import ovation.*;
+            fileStruct = load(self.pdsFile, '-mat');
+            pds = fileStruct.PDS;
+            
+            epochs = self.epochGroup.getEpochs();
+            
+            j = 1;
+            for i = 1:length(epochs)
+                epoch = epochs(i);
+                if(strcmp(char(epoch.getProtocolID()), 'intertrial'))
+                    assertJavaEqual(epoch.getStartTime(),...
+                        self.epochGroup.getStartTime.plusMillis(1000*pds.datapixxstoptime(j)));
+                    assertJavaEqual(epoch.getEndTime(),...
+                        self.epochGroup.getStartTime.plusMillis(1000*pds.datapixxstarttime(j+1)));
+                else
+                    assertJavaEqual(epoch.getStartTime(),...
+                        self.epochGroup.getStartTime.plusMillis(1000*pds.datapixxstarttime(j)));
+                    assertJavaEqual(epoch.getEndTime(),...
+                        self.epochGroup.getStartTime.plusMillis(1000*pds.datapixxstarttime(j)));
+                    j = j+1;
                 end
             end
         end
@@ -96,7 +123,7 @@ classdef TestPDSImport < TestPldapsBase
             
         end
         
-        function testShouldAttachPDSAsResource(self)
+        function testShouldAttachPDSAsEpochGroupResource(self)
             [~, pdsName, ext] = fileparts(self.pdsFile);
             assertTrue( ~isempty(self.epochGroup.getResource([pdsName ext])));
         end
@@ -104,8 +131,9 @@ classdef TestPDSImport < TestPldapsBase
         function testEpochShouldHaveProperties(self)
              epochs = self.epochGroup.getEpochs();
             for n=1:length(epochs)
-                props = epochs(n).getProperties().keySet();
-                assertTrue(props.contains('datapixxtime'));
+                props = epochs(n).getOwnerProperties().keySet();
+                assertTrue(props.contains('dataPixxStart_seconds'));
+                assertTrue(props.contains('dataPixxStop_seconds'));
                 assertTrue(props.contains('uniqueNumber'));
                 assertTrue(props.contains('uniqueNumberString'));
                 assertTrue(props.contains('trialNumber'));
@@ -134,28 +162,27 @@ classdef TestPDSImport < TestPldapsBase
             fileStruct = load(self.pdsFile, '-mat');
             pds = fileStruct.PDS;
             
-            idx = find(pds.unique_number(:,1) ~= -1);
+            idx = find(pds.datapixxstarttime == min(pds.datapixxstarttime));
             unum = pds.unique_number(idx(1),:);
-            first_duration = pds.eyepos{idx(1)}(end,3);
             
-            endTime = datetime(unum(1), unum(2), unum(3), unum(4), unum(5), unum(6), 0, self.timezone.getID());
-            startTime = endTime.minusMillis(first_duration * 1000);
+            startTime = datetime(unum(1), unum(2), unum(3), unum(4), unum(5), unum(6), 0, self.timezone.getID());
             
-            assertTrue(self.epochGroup.getStartTime().equals(startTime));
+            
+            assertJavaEqual(self.epochGroup.getStartTime(),...
+                startTime);
             
         end
         
         function testEpochGroupShouldHavePDSEndTime(self)
-                        import ovation.*;
+            import ovation.*;
+            
             fileStruct = load(self.pdsFile, '-mat');
             pds = fileStruct.PDS;
             
-            idx = find(pds.unique_number(:,1) ~= -1);
-            unum = pds.unique_number(idx(end),:);
+            totalDurationSeconds = max(pds.datapixxstoptime) - min(pds.datapixxstarttime);
             
-            endTime = datetime(unum(1), unum(2), unum(3), unum(4), unum(5), unum(6), 0, self.timezone.getID());
-            
-            assertTrue(self.epochGroup.getEndTime().equals(endTime));
+            assertJavaEqual(self.epochGroup.getEndTime(),...
+                self.epochGroup.getStartTime().plusMillis(1000*totalDurationSeconds));
         end
     end
 end
