@@ -19,7 +19,7 @@ function runtestsuite(test_directory)
     % but this is the only dependency. There shouldn't be any magic numbers
     % in the test code.
     pdsFile = 'fixtures/ovationtest032712revcodots1440.PDS';
-    plxFile = 'fixtures/ovationtest032712revcodots1440.MAT';
+    plxFile = 'fixtures/ovationtest032712revcodots1441.MAT';
     plxRawFile = 'fixtures/ovationtest032712revcodots1441.plx';
     plxExpFile = 'fixtures/ovationtest032712revcodots1441.exp';
     timezone = DateTimeZone.forID('US/Central');
@@ -65,7 +65,8 @@ function runtestsuite(test_directory)
     tic;
     ImportPLX(epochGroup,...
     plxFile,...
-    plxRawFile);
+    plxRawFile,...
+    plxExpFile);
     toc;
 
     runtests(test_directory, '-xmlfile', 'test-output.xml');

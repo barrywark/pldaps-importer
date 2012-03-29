@@ -68,12 +68,17 @@ function epochGroup = ImportPladpsPDS(experiment,...
         firstEpochStart,...
         lastEpochEnd);
     
+    % Convert DV paired cells to a struct
+    displayVariables.bits = cell2struct(displayVariables.bits(:,2)',...
+        num2cell(strcat('bit_', num2str(cell2mat(displayVariables.bits(:,1)))), 2)',...
+        2);
+    
     insertEpochs(epochGroup,...
         trialFunction,...
         pds,...
         repmat(displayVariables,length(pds.unique_number),1),...
         devices,...
-        ntrials); %TODO c1 should be a struct array, but we're faking it
+        ntrials); %TODO dv should be a struct array, but we're faking it
     
 end
 
@@ -128,14 +133,20 @@ function insertEpochs(epochGroup, protocolID, pds, parameters, devices, ntrials)
         epoch.addProperty('timeBrokeFixation', pds.timebrokefix(n));
         epoch.addProperty('correct', pds.correct(n));
         
-        previousEpoch = setPreviousEpoch(epoch, previousEpoch, pds, n);
+        previousEpoch = setPreviousEpoch(epoch, previousEpoch);
         
         addResponseAndStimulus(epoch, protocolID, pds.eyepos{n}, parameters(n), devices, n);       
+        
+        if(isnan(pds.fp1off(n)))
+            fp1offTime = epoch.getEndTime();
+        else
+            fp1offTime = epoch.getStartTime().plusSeconds(pds.fp1off(n));
+        end
         
         epoch.addTimelineAnnotation('fixation point 1 on',...
             'fixationPoint1',...
             epoch.getStartTime().plusSeconds(pds.fp1on(n)),...
-            epoch.getStartTime().plusSeconds(pds.fp1off(n)));
+            fp1offTime);
         epoch.addTimelineAnnotation('fixation point 1 entered',...
             'fixationPoint1',...
             epoch.getStartTime().plusSeconds(pds.fp1entered(n)));
@@ -145,6 +156,8 @@ function insertEpochs(epochGroup, protocolID, pds, parameters, devices, ntrials)
                 'fixation',...
                 epoch.getStartTime().plusSeconds(pds.timebrokefix(n)));
         end
+        
+        
         epoch.addTimelineAnnotation('fixation point 2 off',...
             'fixationPoint2',...
             epoch.getStartTime().plusSeconds(pds.fp2off(n)));
@@ -173,7 +186,7 @@ function insertEpochs(epochGroup, protocolID, pds, parameters, devices, ntrials)
     end
 end
 
-function previousEpoch = setPreviousEpoch(epoch, previousEpoch, pds, n)
+function previousEpoch = setPreviousEpoch(epoch, previousEpoch)
     if (~ isempty(previousEpoch) )
         if (previousEpoch.getMyProperty('trialNumber') +1) == epoch.getMyProperty('trialNumber')
             epoch.setPreviousEpoch(previousEpoch);
@@ -184,11 +197,12 @@ function previousEpoch = setPreviousEpoch(epoch, previousEpoch, pds, n)
     
 end
 
-function addResponseAndStimulus(epoch, trialFunction, eye_position_data, c1, devices, epochNumber)
+function addResponseAndStimulus(epoch, trialFunction, eye_position_data, dv, devices, epochNumber)
     import ovation.*;
     
-    stimulusDeviceParams = struct2map(c1); % TODO divide the c1 file into device parameters
-    stimulusParameters = struct2map(c1); % and stimulus parameters
+    
+    stimulusDeviceParams = struct2map(dv); % TODO divide the c1 file into device parameters
+    stimulusParameters = struct2map(dv); % and stimulus parameters
     
     dimensionLabels{1} = 'time';
     dimensionLabels{2} = 'X-Y';

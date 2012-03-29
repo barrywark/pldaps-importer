@@ -21,7 +21,7 @@ classdef TestPldapsBase < TestCase
         function setUp(self)
             import ovation.*;
             
-            self.context = Ovation.connect(self.connection_file, self.username, self.password);
+            self.context = Ovation.connect(fullfile(pwd(), self.connection_file), self.username, self.password);
             
         end
 
