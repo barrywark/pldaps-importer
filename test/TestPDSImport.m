@@ -39,7 +39,7 @@ classdef TestPDSImport < TestPldapsBase
         % EpochGroup
         %  - should have correct trial function name as group label
         %  - should have PDS start time (min unique number)
-        %  x should have PDS start time + last datapixxendtime seconds
+        %  - should have PDS start time + last datapixxendtime seconds
         %  - should have original plx file attached as Resource
         %  - should have PLX exp file attached as Resource
         % For each Epoch
@@ -59,7 +59,7 @@ classdef TestPDSImport < TestPldapsBase
         %  - should have spike times t0 < ts <= end_trial
         %  - should have same number of wave forms
         
-        function testEpochsShouldHaveNextPrevLinksWhenConsecutive(self)
+        function testEpochsShouldHaveNextPrevLinks(self)
             
             epochs = self.epochGroup.getEpochs();
             
@@ -76,8 +76,36 @@ classdef TestPDSImport < TestPldapsBase
             end
         end
         
+        function testEpochShouldHaveDVParameters(self)
+            import ovation.*;
+            fileStruct = load(self.pdsFile, '-mat');
+            dv = fileStruct.dv;
+            
+            % Convert DV paired cells to a struct
+            dv.bits = cell2struct(dv.bits(:,2)',...
+                num2cell(strcat('bit_', num2str(cell2mat(dv.bits(:,1)))), 2)',...
+                2);
+            
+            dvMap = ovation.struct2map(dv);
+            epochsItr = self.epochGroup.getEpochsIterable().iterator();
+            while(epochsItr.hasNext())
+                epoch = epochsItr.next();
+                keyItr = dvMap.keySet().iterator();
+                while(keyItr.hasNext())
+                    key = keyItr.next();
+                    if(isjava(dvMap.get(key)))
+                        assertJavaEqual(dvMap.get(key),...
+                            epoch.getProtocolParameter(key));
+                    else
+                        assertEqual(dvMap.get(key),...
+                            epoch.getProtocolParameter(key));
+                    end
+                end
+            end
+        end
+        
         function testEpochsShouldBeSequentialInTime(self)
-            epochs = self.epochGroup.getEpochs()
+            epochs = self.epochGroup.getEpochs();
             
             for i = 2:length(epochs)
                 assertJavaEqual(epochs(i).getPreviousEpoch(),...
@@ -104,7 +132,7 @@ classdef TestPDSImport < TestPldapsBase
                     assertJavaEqual(epoch.getStartTime(),...
                         self.epochGroup.getStartTime.plusMillis(1000*pds.datapixxstarttime(j)));
                     assertJavaEqual(epoch.getEndTime(),...
-                        self.epochGroup.getStartTime.plusMillis(1000*pds.datapixxstarttime(j)));
+                        self.epochGroup.getStartTime.plusMillis(1000*pds.datapixxstoptime(j)));
                     j = j+1;
                 end
             end
