@@ -138,7 +138,7 @@ classdef TestPDSImport < TestPldapsBase
             unum = pds.unique_number(idx(1),:);
             first_duration = pds.eyepos{idx(1)}(end,3);
             
-            endTime = datetime(unum(1), unum(2), unum(3), unum(4), unum(5), unum(6), 0, self.timezone);
+            endTime = datetime(unum(1), unum(2), unum(3), unum(4), unum(5), unum(6), 0, self.timezone.getID());
             startTime = endTime.minusMillis(first_duration * 1000);
             
             assertTrue(self.epochGroup.getStartTime().equals(startTime));
@@ -153,7 +153,7 @@ classdef TestPDSImport < TestPldapsBase
             idx = find(pds.unique_number(:,1) ~= -1);
             unum = pds.unique_number(idx(end),:);
             
-            endTime = datetime(unum(1), unum(2), unum(3), unum(4), unum(5), unum(6), 0, self.timezone);
+            endTime = datetime(unum(1), unum(2), unum(3), unum(4), unum(5), unum(6), 0, self.timezone.getID());
             
             assertTrue(self.epochGroup.getEndTime().equals(endTime));
         end
