@@ -38,22 +38,22 @@ classdef TestPDSImport < TestPldapsBase
         
         % EpochGroup
         %  - should have correct trial function name as group label
-        %  - should have PDS start time
+        %  - should have PDS start time (min unique number)
         %  x should have PDS start time + last datapixxendtime seconds
         %  - should have original plx file attached as Resource
         %  - should have PLX exp file attached as Resource
         % For each Epoch
         %  - should have trial function name as protocol ID
-        %  - should have parameters from c1, PDS
-        %  - should have duration equal to eye tracker data duration (last sample of eye tracker data gives duration)
-        %  - should have sequential unique identifier with prev/next 
-        %  - should have next/pre if next/prev epochs were recorded, respectively
-        %  - should have approparite stimuli and responses
+        %  x should have parameters from dv, PDS
+        %  x should have duration equal to datapixx start - datapixx end
+        %  x should have sequential unique identifier with prev/next 
+        %  x should have next/pre if next/prev epochs were recorded, respectively
+        %  x should have approparite stimuli and responses
         % For each stimulus
-        %  - should have correct plugin ID (TBD)
-        %  - should have event times (+ other?) stimulus parameters
+        %  x should have correct plugin ID (TBD)
+        %  x should have event times (+ other?) stimulus parameters
         % For each response
-        %  - ??
+        %  x ??
         % These are for plx import
         %  - should have spike times t0 < ts <= end_trial
         %  - should have same number of wave forms
