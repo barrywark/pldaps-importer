@@ -37,14 +37,14 @@ function epochGroup = ImportPldapsPDS(experiment,...
     
     
     % External devices
-    devices.psychToolbox = experiment.insertExternalDevice('PsychToolbox', 'Huk lab');
+    devices.psychToolbox = experiment.externalDevice('PsychToolbox', 'Huk lab');
     devices.psychToolbox.addProperty('psychtoolbox version', '3.0.8');
     devices.psychToolbox.addProperty('matlab version', 'R2009a 32bit');
-    devices.datapixx = experiment.insertExternalDevice('DataPixx', 'VPixx Technologies');
-    devices.monitor = experiment.insertExternalDevice('Monitor LH 1080p', 'LG');
+    devices.datapixx = experiment.externalDevice('DataPixx', 'VPixx Technologies');
+    devices.monitor = experiment.externalDevice('Monitor LH 1080p', 'LG');
     devices.monitor.addProperty('resolution', NumericData([1920, 1080]));
-    devices.eye_tracker = experiment.insertExternalDevice('Eye Trac 6000', 'ASL');
-    devices.eye_tracker_timer = experiment.insertExternalDevice('Windows', 'Microsoft');
+    devices.eye_tracker = experiment.externalDevice('Eye Trac 6000', 'ASL');
+    devices.eye_tracker_timer = experiment.externalDevice('Windows', 'Microsoft');
     
     % generate the start and end times for each epoch, from the unique_number and
     % timezone

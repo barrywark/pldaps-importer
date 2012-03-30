@@ -44,12 +44,12 @@ classdef TestPDSImport < TestPldapsBase
         %  - should have PLX exp file attached as Resource
         % For each Epoch
         %  - should have trial function name as protocol ID
-        %  x should have protocol parameters from dv, PDS
+        %  - should have protocol parameters from dv, PDS
         %  - should have start and end time defined by datapixx
         %  - should have sequential time with prev/next 
         %  - should have next/pre
         %    - intertrial Epochs should interpolate
-        %  x should have approparite stimuli and responses
+        %  - should have approparite stimuli and responses
         % For each stimulus
         %  x should have correct plugin ID (TBD)
         %  x should have event times (+ other?) stimulus parameters
@@ -101,6 +101,31 @@ classdef TestPDSImport < TestPldapsBase
                             epoch.getProtocolParameter(key));
                     end
                 end
+            end
+        end
+        
+        function testEpochShouldHavePDSProtocolParameters(self)
+            import ovation.*;
+            fileStruct = load(self.pdsFile, '-mat');
+            pds = fileStruct.PDS;
+            
+            
+            epochsItr = self.epochGroup.getEpochsIterable().iterator();
+            i = 1;
+            while(epochsItr.hasNext())
+                epoch = epochsItr.next();
+                assertEqual(pds.targ1XY(i),...
+                    epoch.getProtocolParameter('target1_XY_deg_visual_angle'));
+                assertEqual(pds.targ2XY(i),...
+                    epoch.getProtocolParameter('target2_XY_deg_visual_angle'));
+                assertEqual(pds.coherence(i),...
+                    epoch.getProtocolParameter('coherence'));
+                if(isfield(pds, 'fp2XY'))
+                    assertEqual(pds.fp2XY(i),...
+                        epoch.getProtocolParameter('fp2_XY_deg_visual_angle'));
+                end
+                assertEqual(pds.inRF(i),...
+                    epoch.getProtocolParameter('inReceptiveField'));
             end
         end
         
@@ -172,16 +197,46 @@ classdef TestPDSImport < TestPldapsBase
                 assertTrue(props.contains('timeOfReward'));
                 assertTrue(props.contains('timeBrokeFixation'));
                 assertTrue(props.contains('correct'));
-                                
+                
             end
         end
         
-         function testEpochShouldHaveResponses(self)
-             epochs = self.epochGroup.getEpochs();
+        function testEpochShouldHaveResponseDataFromPDS(self)
+            fileStruct = load(self.pdsFile, '-mat');
+            pds = fileStruct.PDS;
+            
+            experiment = self.epochGroup.getExperiment();
+            
+            devices.eye_tracker = experiment.externalDevice('Eye Trac 6000', 'ASL');
+            devices.eye_tracker_timer = experiment.externalDevice('Windows', 'Microsoft');
+            
+            epochs = self.epochGroup.getEpochs();
             for n=1:length(epochs)
-                %todo getResponse and stimulus stuff
-                assertTrue(false);
-                                
+                epoch = epochs(n);
+                assertFalse(isempty(epoch.getResponse(devices.eye_tracker.getName())));
+                
+                r = epoch.getResponse(devices.eye_tracker.getName());
+                rData = reshape(r.getFloatingPointData(),...
+                    r.getShape()');
+                
+                assertElementsAlmostEqual(pds.eyepos{n}(:,1:2), rData);
+                
+                assertFalse(isempty(epoch.getResponse(devices.eye_tracker_timer.getName())));    
+                r = epoch.getResponse(devices.eye_tracker_timer.getName());
+                rData = r.getFloatingPointData();
+                assertElementsAlmostEqual(pds.eyepos{n}(:,3), rData);
+            end
+        end
+        
+        function testEpochShouldHaveStimuli(self)
+            experiment = self.epochGroup.getExperiment();
+            
+            devices.psychToolbox = experiment.externalDevice('PsychToolbox', 'Huk lab');
+
+            epochs = self.epochGroup.getEpochs();
+            for n=1:length(epochs)
+                epoch = epochs(n);
+                assertFalse(isempty(epoch.getStimulus(devices.psychToolbox.getName())));
             end
         end
                 
