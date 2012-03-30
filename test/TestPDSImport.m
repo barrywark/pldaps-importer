@@ -51,8 +51,8 @@ classdef TestPDSImport < TestPldapsBase
         %    - intertrial Epochs should interpolate
         %  - should have approparite stimuli and responses
         % For each stimulus
-        %  x should have correct plugin ID (TBD)
-        %  x should have event times (+ other?) stimulus parameters
+        %  - should have correct plugin ID (TBD)
+        %  - should have event times (+ other?) stimulus parameters
         % For each response
         %  - should have numeric data from PDS
 
@@ -61,7 +61,7 @@ classdef TestPDSImport < TestPldapsBase
             
             epochs = self.epochGroup.getEpochs();
             
-            for i = 1:length(epochs)
+            for i = 2:length(epochs)
                 prev = epochs(i).getPreviousEpoch();
                 assert(~isempty(prev));
                 if(strfind(epochs(i).getProtocolID(), 'intertrial'))

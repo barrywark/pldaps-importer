@@ -100,7 +100,7 @@ function insertEpochs(epochGroup, protocolID, pds, parameters, devices, ntrials)
         dataPixxStart = pds.datapixxstarttime(n);
         dataPixxEnd = pds.datapixxstoptime(n);
         
-        %TODO check inter-trial interval
+        
         
         protocol_parameters = parameters(n);
         protocol_parameters.target1_XY_deg_visual_angle = pds.targ1XY(n);
@@ -111,7 +111,26 @@ function insertEpochs(epochGroup, protocolID, pds, parameters, devices, ntrials)
         end
         protocol_parameters.inReceptiveField = pds.inRF(n);
         
-        
+        if(n > 1) % Assumes first Epoch is not an inter-trial
+           if(dataPixxStart > pds.datapixxstoptime(n-1))
+               % Inserting inter-trial Epoch
+               interEpochDataPixxStart = pds.datapixxstoptime(n-1);
+               interEpochDataPixxStop = dataPixxStart;
+               
+               interEpoch = epochGroup.insertEpoch(epochGroup.getStartTime().plusMillis(interEpochDataPixxStart * 1000),...
+                   epochGroup.getStartTime().plusMillis(interEpochDataPixxStop * 1000),...
+                   [protocolID '.intertrial'],...
+                   struct2map(protocol_parameters));
+               interEpoch.addProperty('dataPixxStart_seconds', interEpochDataPixxStart);
+               interEpoch.addProperty('dataPixxStop_seconds', interEpochDataPixxStop);
+               
+               if(~isempty(previousEpoch))
+                   interEpoch.setPreviousEpoch(previousEpoch);
+               end
+               
+               previousEpoch = interEpoch;
+           end
+        end
         
         epoch = epochGroup.insertEpoch(epochGroup.getStartTime().plusMillis(dataPixxStart * 1000),...
             epochGroup.getStartTime().plusMillis(dataPixxEnd * 1000),...
@@ -133,7 +152,10 @@ function insertEpochs(epochGroup, protocolID, pds, parameters, devices, ntrials)
         epoch.addProperty('timeBrokeFixation', pds.timebrokefix(n));
         epoch.addProperty('correct', pds.correct(n));
         
-        previousEpoch = setPreviousEpoch(epoch, previousEpoch);
+        if(~isempty(previousEpoch))
+            epoch.setPreviousEpoch(previousEpoch);
+        end
+        previousEpoch = epoch;
         
         addResponseAndStimulus(epoch, protocolID, pds.eyepos{n}, parameters(n), devices, n);       
         
@@ -184,17 +206,6 @@ function insertEpochs(epochGroup, protocolID, pds, parameters, devices, ntrials)
             epoch.getStartTime().plusSeconds(pds.timereward(n)));
         
     end
-end
-
-function previousEpoch = setPreviousEpoch(epoch, previousEpoch)
-    if (~ isempty(previousEpoch) )
-        if (previousEpoch.getMyProperty('trialNumber') +1) == epoch.getMyProperty('trialNumber')
-            epoch.setPreviousEpoch(previousEpoch);
-        end
-    end
-    
-    previousEpoch = epoch;
-    
 end
 
 function addResponseAndStimulus(epoch, trialFunction, eye_position_data, dv, devices, epochNumber)
