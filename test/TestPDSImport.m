@@ -54,10 +54,8 @@ classdef TestPDSImport < TestPldapsBase
         %  x should have correct plugin ID (TBD)
         %  x should have event times (+ other?) stimulus parameters
         % For each response
-        %  x ??
-        % These are for plx import
-        %  - should have spike times t0 < ts <= end_trial
-        %  - should have same number of wave forms
+        %  - should have numeric data from PDS
+
         
         function testEpochsShouldHaveNextPrevLinks(self)
             
@@ -93,6 +91,9 @@ classdef TestPDSImport < TestPldapsBase
                 keyItr = dvMap.keySet().iterator();
                 while(keyItr.hasNext())
                     key = keyItr.next();
+                    if(isempty(dvMap.get(key)))
+                        continue;
+                    end
                     if(isjava(dvMap.get(key)))
                         assertJavaEqual(dvMap.get(key),...
                             epoch.getProtocolParameter(key));
@@ -228,8 +229,20 @@ classdef TestPDSImport < TestPldapsBase
             end
         end
         
-        function testEpochShouldHaveStimuli(self)
+        function testEpochStimuliShouldHavePluginIDAndParameters(self)
             experiment = self.epochGroup.getExperiment();
+            trialFunction = self.epochGroup.getLabel();
+            pluginID = ['edu.utexas.huk.pladapus.' char(trialFunction)];
+            
+            fileStruct = load(self.pdsFile, '-mat');
+            dv = fileStruct.dv;
+            
+            % Convert DV paired cells to a struct
+            dv.bits = cell2struct(dv.bits(:,2)',...
+                num2cell(strcat('bit_', num2str(cell2mat(dv.bits(:,1)))), 2)',...
+                2);
+            
+            dvMap = ovation.struct2map(dv);
             
             devices.psychToolbox = experiment.externalDevice('PsychToolbox', 'Huk lab');
 
@@ -237,7 +250,38 @@ classdef TestPDSImport < TestPldapsBase
             for n=1:length(epochs)
                 epoch = epochs(n);
                 assertFalse(isempty(epoch.getStimulus(devices.psychToolbox.getName())));
+                
             end
+            
+            epochsItr = self.epochGroup.getEpochsIterable().iterator();
+            while(epochsItr.hasNext())
+                epoch = epochsItr.next();
+                s = epoch.getStimulus(devices.psychToolbox.getName());
+                assertFalse(isempty(s));
+                
+                assertTrue(strcmp(pluginID, char(s.getPluginID())));
+                
+                keyItr = dvMap.keySet().iterator();
+                while(keyItr.hasNext())
+                    key = keyItr.next();
+                    if(isempty(dvMap.get(key)))
+                        continue;
+                    end
+                    if(isjava(dvMap.get(key)))
+                        assertJavaEqual(dvMap.get(key),...
+                            s.getStimulusParameter(key));
+                        assertJavaEqual(dvMap.get(key),...
+                            s.getDeviceParameters.get(key));
+                    else
+                        assertEqual(dvMap.get(key),...
+                            s.getStimulusParameter(key));
+                        assertEqual(dvMap.get(key),...
+                            s.getDeviceParameters.get(key));
+                    end
+                end
+            end
+            
+            
         end
                 
         function testEpochGroupShouldHavePDSStartTime(self)

@@ -49,6 +49,10 @@ classdef TestPLXImport < TestPldapsBase
             self.plx = plxStruct.plx;
         end
         
+        % The PLX import should
+        %  - import spike data to existing Epochs
+        %    - with spike times t0 < ts <= end_trial
+        %    - the same number of wave forms as spike times
         
         function testShouldAppendPLXFile(self)
             self.assertFileResource(self.epochGroup, self.plxRawFile);
