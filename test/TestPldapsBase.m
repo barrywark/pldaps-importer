@@ -1,9 +1,19 @@
 classdef TestPldapsBase < TestCase
+    
     properties
         context
         connection_file
         username
         password
+    end
+    
+    properties(Constant)
+        
+        pdsFile = 'fixtures/jlyTest040212tmpSaccadeMapping1102.PDS';
+        plxFile = 'fixtures/jlyTest040212tmpSaccadeMapping1103.MAT';
+        plxRawFile = 'fixtures/jlyTest040212tmpSaccadeMapping1103.plx';
+        plxExpFile = 'fixtures/jlyTest040212tmpdots1109.exp';
+        timezone = org.joda.time.DateTimeZone.forID('US/Central');
     end
     
     methods

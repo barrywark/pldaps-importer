@@ -1,14 +1,7 @@
 classdef TestPLXImport < TestPldapsBase
     
     properties
-        pdsFile
-        plxFile
-        plxRawFile
-        epochGroup
-        trialFunctionName
-        timezone
         plx
-        plxExpFile
         drNameSuffix
     end
     
@@ -17,14 +10,8 @@ classdef TestPLXImport < TestPldapsBase
             self = self@TestPldapsBase(name);
             
             import ovation.*;
-            
-            % N.B. these value should match those in runtestsuite
-            self.pdsFile = 'fixtures/pat120811a_decision2_16.PDS';
-            self.plxFile = 'fixtures/pat120811a_decision2_1600matlabfriendlyPLX.mat';
-            self.plxRawFile = 'fixtures/pat120811a_decision2_1600.plx';
-            self.plxExpFile = 'fixtures/pat120811a_decision2_1600plx.exp';
+
             self.trialFunctionName = 'trial_function_name';
-            self.timezone = 'America/New_York';
             
             expModificationDate = org.joda.time.DateTime(java.io.File(self.plxFile).lastModified());
             self.drNameSuffix = [num2str(expModificationDate.getYear()) '-' ...
@@ -51,8 +38,8 @@ classdef TestPLXImport < TestPldapsBase
         
         % The PLX import should
         %  - import spike data to existing Epochs
-        %    - with spike times t0 < ts <= end_trial
-        %    - the same number of wave forms as spike times
+        %    x with spike times t0 < ts <= end_trial
+        %    x the same number of wave forms as spike times
         
         function testShouldAppendPLXFile(self)
             self.assertFileResource(self.epochGroup, self.plxRawFile);
@@ -216,11 +203,11 @@ classdef TestPLXImport < TestPldapsBase
         end
         
         function testSpikeTimeShouldBeInEpochTimeRange(self)
-            
+            %TODO
         end
         
         function testShouldHaveSameNumberOfSpikesAndWaveForms(self)
-            
+            %TODO
         end
     end
 end

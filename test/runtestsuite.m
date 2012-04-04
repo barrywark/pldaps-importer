@@ -8,8 +8,6 @@ function runtestsuite(test_directory)
     % re-importing the test fixture data.
 
 
-    import org.joda.time.*;
-    
     % N.B. these values should match in TestPldapsBase
     connection_file = 'ovation/matlab_fd.connection';
     username = 'TestUser';
@@ -18,11 +16,11 @@ function runtestsuite(test_directory)
     % We're tied to the test fixture defined by these files and values, 
     % but this is the only dependency. There shouldn't be any magic numbers
     % in the test code.
-    pdsFile = 'fixtures/ovationtest032712revcodots1440.PDS';
-    plxFile = 'fixtures/ovationtest032712revcodots1441.MAT';
-    plxRawFile = 'fixtures/ovationtest032712revcodots1441.plx';
-    plxExpFile = 'fixtures/ovationtest032712revcodots1441.exp';
-    timezone = DateTimeZone.forID('US/Central');
+    pdsFile = TestPldapsBase.pdsFile;
+    plxFile = TestPldapsBase.plxFile;
+    plxRawFile = TestPldapsBase.plxRawFile;
+    plxExpFile = TestPldapsBase.plxExpFile;
+    timezone = TestPldapsBase.timezone;
 
     % Delete the test database if it exists
     if(exist(connection_file, 'file') ~= 0)
@@ -61,12 +59,12 @@ function runtestsuite(test_directory)
     timezone);
     toc;
     epochGroup.addResource('edu.utexas.huk.pds', pdsFile);
-
+    
     tic;
     ImportPLX(epochGroup,...
-    plxFile,...
-    plxRawFile,...
-    plxExpFile);
+        plxFile,...
+        plxRawFile,...
+        plxExpFile);
     toc;
 
     runtests(test_directory, '-xmlfile', 'test-output.xml');

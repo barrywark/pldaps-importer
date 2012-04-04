@@ -104,12 +104,18 @@ function insertEpochs(epochGroup, protocolID, pds, parameters, devices, ntrials)
         
         protocol_parameters = parameters(n);
         protocol_parameters.target1_XY_deg_visual_angle = pds.targ1XY(n);
-        protocol_parameters.target2_XY_deg_visual_angle = pds.targ2XY(n);
-        protocol_parameters.coherence = pds.coherence(n);
+        if(isfield(pds, 'targ2XY'))
+            protocol_parameters.target2_XY_deg_visual_angle = pds.targ2XY(n);
+        end
+        if(isfield(pds, 'coherence'))
+            protocol_parameters.coherence = pds.coherence(n);
+        end
         if(isfield(pds, 'fp2XY'))
             protocol_parameters.fp2_XY_deg_visual_angle = pds.fp2XY(n);
         end
-        protocol_parameters.inReceptiveField = pds.inRF(n);
+        if(isfield(pds, 'inRF'))
+            protocol_parameters.inReceptiveField = pds.inRF(n);
+        end
         
         if(n > 1) % Assumes first Epoch is not an inter-trial
            if(dataPixxStart > pds.datapixxstoptime(n-1))
@@ -145,12 +151,23 @@ function insertEpochs(epochGroup, protocolID, pds, parameters, devices, ntrials)
         epoch.addProperty('goodTrial', pds.goodtrial(n));
         
         % These are more like DerivedResponses...
-        epoch.addProperty('coherence', pds.coherence(n)); % TODO Is this a protocol parameter?
-        epoch.addProperty('chooseRF', pds.chooseRF(n));
-        epoch.addProperty('timeOfChoice', pds.timechoice(n));
-        epoch.addProperty('timeOfReward', pds.timereward(n));
-        epoch.addProperty('timeBrokeFixation', pds.timebrokefix(n));
-        epoch.addProperty('correct', pds.correct(n));
+        if(isfield(pds, 'chooseRF'))
+            epoch.addProperty('chooseRF', pds.chooseRF(n));
+        end
+        if(isfield(pds, 'timeOfChoice'))
+            epoch.addProperty('timeOfChoice', pds.timechoice(n));
+        end
+        if(isfield(pds, 'timeOfReward'))
+            epoch.addProperty('timeOfReward', pds.timereward(n));
+        end
+        if(isfield(pds, 'timeBrokeFixation'))
+            epoch.addProperty('timeBrokeFixation', pds.timebrokefix(n));
+        end
+        if(isfield(pds, 'correct'))
+            if(pds.correct(n))
+                epoch.addTag('correct');
+            end
+        end
         
         if(~isempty(previousEpoch))
             epoch.setPreviousEpoch(previousEpoch);
@@ -194,16 +211,22 @@ function insertEpochs(epochGroup, protocolID, pds, parameters, devices, ntrials)
                 'target',...
                 epoch.getStartTime().plusSeconds(pds.targon(n)));
         end
-        epoch.addTimelineAnnotation('dots on',...
-            'dots',...
-            epoch.getStartTime().plusSeconds(pds.dotson(n)),...
-            epoch.getStartTime().plusSeconds(pds.dotsoff(n)));
-        epoch.addTimelineAnnotation('time of choice',...
-            'choice',...
-            epoch.getStartTime().plusSeconds(pds.timechoice(n)));
-        epoch.addTimelineAnnotation('time of reward',...
-            'reward',...
-            epoch.getStartTime().plusSeconds(pds.timereward(n)));
+        if(isfield(pds, 'dotson'))
+            epoch.addTimelineAnnotation('dots on',...
+                'dots',...
+                epoch.getStartTime().plusSeconds(pds.dotson(n)),...
+                epoch.getStartTime().plusSeconds(pds.dotsoff(n)));
+        end
+        if(isfield(pds, 'timechoice'))
+            epoch.addTimelineAnnotation('time of choice',...
+                'choice',...
+                epoch.getStartTime().plusSeconds(pds.timechoice(n)));
+        end
+        if(isfield(pds, 'timereward'))
+            epoch.addTimelineAnnotation('time of reward',...
+                'reward',...
+                epoch.getStartTime().plusSeconds(pds.timereward(n)));
+        end
         
     end
 end
@@ -243,7 +266,7 @@ function addResponseAndStimulus(epoch, trialFunction, eye_position_data, dv, dev
         dimensionLabels,...
         [sampling_rate, 1],...
         samplingRateUnits,...
-        'edu.utexas.huk.eye_position'); %TODO should be numeric data UTI
+        Response.NUMERIC_DATA_UTI);
     
     data = NumericData(eye_position_data(:,3));
     epoch.insertResponse(devices.eye_tracker_timer,...
@@ -253,7 +276,7 @@ function addResponseAndStimulus(epoch, trialFunction, eye_position_data, dv, dev
         'time',...
         1,...
         'N/A',...
-        'edu.utexas.huk.eye_position_sample_time'); % TODO should be numeric data UTI?
+        Response.NUMERIC_DATA_UTI);
     
     data = NumericData(eye_position_data(:,4));
     derivationParameters = struct(); %TODO: add derivation parameters, if any

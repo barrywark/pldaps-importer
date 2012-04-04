@@ -1,11 +1,8 @@
 classdef TestPDSImport < TestPldapsBase
     
     properties
-        pdsFile
-        plxFile
         epochGroup
         trialFunctionName
-        timezone
     end
     
     methods
@@ -16,8 +13,6 @@ classdef TestPDSImport < TestPldapsBase
             import org.joda.time.*;
            
             % N.B. these value should match those in runtestsuite
-            self.pdsFile = 'fixtures/ovationtest032712revcodots1440.PDS';
-            self.plxFile = 'fixtures/fixtures/ovationtest032712revcodots1440.mat';
             self.trialFunctionName = 'ovationtest032712revcodots1440';
             self.timezone = DateTimeZone.forID('US/Central');
             
