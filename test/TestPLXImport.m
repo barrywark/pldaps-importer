@@ -3,6 +3,7 @@ classdef TestPLXImport < TestPldapsBase
     properties
         plx
         drNameSuffix
+        epochGroup
     end
     
     methods
@@ -11,7 +12,6 @@ classdef TestPLXImport < TestPldapsBase
             
             import ovation.*;
 
-            self.trialFunctionName = 'trial_function_name';
             
             expModificationDate = org.joda.time.DateTime(java.io.File(self.plxFile).lastModified());
             self.drNameSuffix = [num2str(expModificationDate.getYear()) '-' ...
@@ -101,7 +101,7 @@ classdef TestPLXImport < TestPldapsBase
                     for u = 2:maxUnits % col 1 is unsorted
                         if(~isempty(self.plx.spike_times{plxIdx}{c,u}))
                             
-                            % assume there's only DR
+                            % assume there's only one DR
                             drName = ['spikeTimes_channel_' num2str(c-1)...
                                 '_unit_' num2str(u-1) ...
                                 self.drNameSuffix '-1'];
@@ -110,46 +110,6 @@ classdef TestPLXImport < TestPldapsBase
                             if(~isempty(dr))
                                 times = dr.getDoubleData();
                                 assertTrue(all(diff(self.plx.spike_times{plxIdx}{c,u}, times) < 0.001));
-                            end
-                        end
-                    end
-                end
-            end
-        end
-        
-        function testDerivedResponsesHaveAllDerivationParamtersFromEXPFIle(self)
-            epochs = self.epochGroup.getEpochsUnsorted();
-            exp = loadPLXExpFile(self.plxExpFile);
-            
-            for i = 1:length(epochs)
-                epoch = epochs(i);
-                epochUniqueNumber = epoch.getMyProperty('uniqueNumber').getIntegerData()';
-                plxUniqueNumber = mod(epochUniqueNumber, 256); % Yikes!
-                
-                plxIdx = self.plxIdxForUniqueNumber(plxUniqueNumber);
-                
-                if(isempty(plxIdx) || isempty(self.plx.spike_waveforms{plxIdx}))
-                    continue;
-                end
-                
-                [maxChannels,maxUnits] = size(self.plx.spike_waveforms{plxIdx});
-                for c = 2:maxChannels % row 1 is unsorted
-                    for u = 2:maxUnits % col 1 is unsorted
-                        if(~isempty(self.plx.spike_waveforms{plxIdx}{c,u}))
-                            
-                            % Assume there's only one DR
-                            drName = ['spikeWaveforms_channel_' num2str(c-1)...
-                                '_unit_' num2str(u-1) ...
-                                self.drNameSuffix '-1'];
-                            
-                            dr = epoch.getMyDerivedResponse(drName);
-                            if(~isempty(dr))
-                                params = dr.getDerivationParameters();
-                                fnames = fieldnames(exp);
-                                for f=1:length(fnames)
-                                    fname = fnames{i};
-                                    assertTrue(params.containsKey(fname));
-                                end
                             end
                         end
                     end
@@ -203,11 +163,7 @@ classdef TestPLXImport < TestPldapsBase
         end
         
         function testSpikeTimeShouldBeInEpochTimeRange(self)
-            %TODO
-        end
-        
-        function testShouldHaveSameNumberOfSpikesAndWaveForms(self)
-            %TODO
+            assert(false);
         end
     end
 end

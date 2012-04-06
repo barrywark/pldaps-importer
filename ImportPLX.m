@@ -76,22 +76,23 @@ function ImportPLX(epochGroup, plxFile, plxRawFile, expFile, varargin)
     
     for i = 1:length(plx.strobe_times)
         if(mod(i,5) == 0)
-            disp(['    Epoch ' num2str(i) ' of ' num2str(length(idx))]);
+            disp(['    Epoch ' num2str(i) ' of ' num2str(length(plx.strobe_times))]);
         end
         
         % Find epoch
         epoch = findEpochByUniqueNumber(epochGroup,...
-            plx.unique_number(idx(i),:),...
+            plx.unique_number(i,:),...
             epochCache);
         if(isempty(epoch))
-            error('ovation:import:plx:unique_number',...
+            warning('ovation:import:plx:unique_number',...
                 'Unable to align PLX data: PLX data contains a unique number not present in the epoch group');
+            continue;
         end
         
         % Epoch spikes are strobe_time to end_time
         
         % Add Epoch spike times and waveforms
-        start_time = plx.strobe_times(i); % Or use start_times
+        start_time = start_times(i);
         end_time = end_times(i);
         insertSpikeDerivedResponses(epoch, plx, start_time, end_time);
         
@@ -103,10 +104,10 @@ function ImportPLX(epochGroup, plxFile, plxRawFile, expFile, varargin)
         if(~isempty(epoch.nextEpoch())) 
             next = epoch.nextEpoch();
             if(next.getProtocolID().contains('intertrial'))
-                if(i == length(plx.strobe_times)) % Or use start_times
+                if(i == length(start_times))
                     inter_trial_end = [];
                 else
-                    inter_trial_end = plx.strobe_times(i+1);
+                    inter_trial_end = start_times(i+1);
                 end
                 
                 insertSpikeDerivedResponses(next, plx, end_time, inter_trial_end);
@@ -228,7 +229,7 @@ function insertSpikeDerivedResponses(epoch, plx, start_time, end_time)
             
             % Find spikes in this Epoch
             if(isempty(end_time))
-                spke_idx = wave_ts{c,u} >= start_time;
+                spke_idx = plx.wave_ts{c,u} >= start_time;
             else 
                 spike_idx = plx.wave_ts{c,u} >= start_time && plx.wave_ts{c,u} < end_time;
             end

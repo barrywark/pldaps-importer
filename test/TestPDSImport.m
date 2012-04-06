@@ -13,9 +13,7 @@ classdef TestPDSImport < TestPldapsBase
             import org.joda.time.*;
            
             % N.B. these value should match those in runtestsuite
-            self.trialFunctionName = 'ovationtest032712revcodots1440';
-            self.timezone = DateTimeZone.forID('US/Central');
-            
+            [~,self.trialFunctionName,~] = fileparts(self.pdsFile);
             
             % Import the plx file
             %ImportPladpsPlx(self.epochGroup,...
@@ -112,16 +110,22 @@ classdef TestPDSImport < TestPldapsBase
                 epoch = epochsItr.next();
                 assertEqual(pds.targ1XY(i),...
                     epoch.getProtocolParameter('target1_XY_deg_visual_angle'));
-                assertEqual(pds.targ2XY(i),...
-                    epoch.getProtocolParameter('target2_XY_deg_visual_angle'));
-                assertEqual(pds.coherence(i),...
-                    epoch.getProtocolParameter('coherence'));
+                if(isfield(pds, 'targ2XY'))
+                    assertEqual(pds.targ2XY(i),...
+                        epoch.getProtocolParameter('target2_XY_deg_visual_angle'));
+                end
+                if(isfield(pds,'coherence'))
+                    assertEqual(pds.coherence(i),...
+                        epoch.getProtocolParameter('coherence'));
+                end
                 if(isfield(pds, 'fp2XY'))
                     assertEqual(pds.fp2XY(i),...
                         epoch.getProtocolParameter('fp2_XY_deg_visual_angle'));
                 end
-                assertEqual(pds.inRF(i),...
-                    epoch.getProtocolParameter('inReceptiveField'));
+                if(isfield(pds,'inRF'))
+                    assertEqual(pds.inRF(i),...
+                        epoch.getProtocolParameter('inReceptiveField'));
+                end
             end
         end
         
@@ -178,6 +182,10 @@ classdef TestPDSImport < TestPldapsBase
         end
         
         function testEpochShouldHaveProperties(self)
+            import ovation.*;
+            fileStruct = load(self.pdsFile, '-mat');
+            pds = fileStruct.PDS;
+            
              epochs = self.epochGroup.getEpochs();
             for n=1:length(epochs)
                 props = epochs(n).getOwnerProperties().keySet();
@@ -187,12 +195,33 @@ classdef TestPDSImport < TestPldapsBase
                 assertTrue(props.contains('uniqueNumberString'));
                 assertTrue(props.contains('trialNumber'));
                 assertTrue(props.contains('goodTrial'));
+                if(isfield(pds,'coherence'))
                 assertTrue(props.contains('coherence'));
+                end
+                if(isfield(pds,'chooseRF'))
                 assertTrue(props.contains('chooseRF'));
+                end
+                if(isfield(pds,'timeOfChoice'))
                 assertTrue(props.contains('timeOfChoice'));
+                end
+                if(isfield(pds,'timeOfReward'))
                 assertTrue(props.contains('timeOfReward'));
+                end
+                if(isfield(pds,'timeOfFixation'))
                 assertTrue(props.contains('timeBrokeFixation'));
-                assertTrue(props.contains('correct'));
+                end
+                if(isfield(pds,'correct'))
+                    if(pds.correct(n))
+                        tags = epochs(n).getTags;
+                        found = false;
+                        for t = 1:lenth(tags);
+                            if(strcmp(char(tags(t)), 'correct'))
+                                found = true;
+                            end
+                        end
+                        assertTrue(found);
+                    end
+                end
                 
             end
         end
