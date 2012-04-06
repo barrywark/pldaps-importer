@@ -110,7 +110,9 @@ classdef TestPLXImport < TestPldapsBase
                        for d = 1:length(derivedResponses)
                            dr = derivedResponses(d);
                            actualSpikeTimes = dr.getFloatingPointData();
-                           assertElementsAlmostEqual(actualSpikeTimes, epochSpikeTimes);
+                           assertElementsAlmostEqual(actualSpikeTimes, epochSpikeTimes,...
+                               'absolute',...
+                               1e-9); %nanosecond precision
                            assertTrue(min(actualSpikeTimes) >= 0);
                            assertTrue(max(actualSpikeTimes) < epoch.getDuration());
                        end

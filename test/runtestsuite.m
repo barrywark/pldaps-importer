@@ -60,9 +60,13 @@ function runtestsuite(test_directory)
     toc;
     epochGroup.addResource('edu.utexas.huk.pds', pdsFile);
     
+    pdsStruct = load(pdsFile, '-mat');
+    dv = pdsStruct.dv;
+    
     tic;
     ImportPLX(epochGroup,...
         plxFile,...
+        dv.bits,...
         plxRawFile,...
         plxExpFile);
     toc;
