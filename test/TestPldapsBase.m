@@ -1,9 +1,25 @@
 classdef TestPldapsBase < TestCase
+    
     properties
         context
         connection_file
         username
         password
+    end
+    
+    properties(Constant)
+        
+%         pdsFile = 'fixtures/jlyTest040212tmpdots1109.PDS';
+%         plxFile = 'fixtures/jlyTest040212tmpDots1103.mat';
+%         plxRawFile = 'fixtures/jlyTest040212tmpDots1103.plx';
+%         plxExpFile = 'fixtures/jlyTest040212tmpdots1109.exp';
+        
+        pdsFile = 'fixtures/jlyTest040212tmpSaccadeMapping1102.PDS';
+        plxFile = 'fixtures/jlyTest040212tmpSaccadeMapping1103.mat';
+        plxRawFile = 'fixtures/jlyTest040212tmpSaccadeMapping1103.plx';
+        plxExpFile = 'fixtures/jlyTest040212tmpdots1109.exp';
+        
+        timezone = org.joda.time.DateTimeZone.forID('US/Central');
     end
     
     methods
@@ -21,7 +37,7 @@ classdef TestPldapsBase < TestCase
         function setUp(self)
             import ovation.*;
             
-            self.context = Ovation.connect(self.connection_file, self.username, self.password);
+            self.context = Ovation.connect(fullfile(pwd(), self.connection_file), self.username, self.password);
             
         end
 

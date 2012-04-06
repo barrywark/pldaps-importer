@@ -13,12 +13,14 @@ function runtestsuite(test_directory)
     username = 'TestUser';
     password = 'password';
 
-    % We're tied to the test fixture defined by these files, but this is the
-    % only dependency. There shouldn't be any magic numbers in the test code.
-    pdsFile = 'fixtures/pat120811a_decision2_16.PDS';
-    plxFile = 'fixtures/pat120811a_decision2_1600matlabfriendlyPLX.mat';
-    plxRawFile = 'fixtures/pat120811a_decision2_1600.plx';
-    plxExpFile = 'fixtures/pat120811a_decision2_1600plx.exp';
+    % We're tied to the test fixture defined by these files and values, 
+    % but this is the only dependency. There shouldn't be any magic numbers
+    % in the test code.
+    pdsFile = TestPldapsBase.pdsFile;
+    plxFile = TestPldapsBase.plxFile;
+    plxRawFile = TestPldapsBase.plxRawFile;
+    plxExpFile = TestPldapsBase.plxExpFile;
+    timezone = TestPldapsBase.timezone;
 
     % Delete the test database if it exists
     if(exist(connection_file, 'file') ~= 0)
@@ -31,9 +33,9 @@ function runtestsuite(test_directory)
     connection_file = ovation.util.createLocalOvationDatabase('ovation', ...
     'matlab_fd',...
     username,...
-    password,...
-    'license.txt',...
-    'ovation-development');
+    password); %,...
+    %'license.txt',...
+    %'ovation-development');
     
     import ovation.*
     ctx = Ovation.connect(fullfile(pwd(),connection_file), username, password);
@@ -45,27 +47,24 @@ function runtestsuite(test_directory)
     datetime());
     source = ctx.insertSource('animal');
 
-    % N.B. these values should match in TestPDSImport
-    trialFunctionName = 'trial_function_name';
-    timezone = 'America/New_York';
 
 
     warning('off', 'ovation:import:plx:unique_number');
 
     % Import the PDS file
     tic;
-    epochGroup = ImportPladpsPDS(expt,...
+    epochGroup = ImportPldapsPDS(expt,...
     source,...
     pdsFile,...
     timezone);
     toc;
     epochGroup.addResource('edu.utexas.huk.pds', pdsFile);
-
+    
     tic;
     ImportPLX(epochGroup,...
-    plxFile,...
-    plxRawFile,...
-    plxExpFile);
+        plxFile,...
+        plxRawFile,...
+        plxExpFile);
     toc;
 
     runtests(test_directory, '-xmlfile', 'test-output.xml');
