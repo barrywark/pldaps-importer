@@ -58,10 +58,10 @@ classdef TestPDSImport < TestPldapsBase
                 prev = epochs(i).getPreviousEpoch();
                 assert(~isempty(prev));
                 if(strfind(epochs(i).getProtocolID(), 'intertrial'))
-                    assertFalse(strfind(prev.getProtocolID(),'intertrial'));
+                    assert(isempty(strfind(prev.getProtocolID(),'intertrial')));
                     assertFalse(isempty(prev.getOwnerProperty('trialNumber')));
                 else
-                    assertTrue(strfind(prev.getProtocolID(),'intertrial'));
+                    assertTrue(~isempty(strfind(prev.getProtocolID(),'intertrial')));
                 end
                 
             end
@@ -74,7 +74,7 @@ classdef TestPDSImport < TestPldapsBase
             % We expect PDS epochs + inter-trial epochs
             expectedEpochCount = (size(fileStruct.PDS.unique_number, 1) * 2) -1;
             
-            assertEquals(expectedEpochCount, self.epochGroup.getEpochCount());
+            assertEqual(expectedEpochCount, self.epochGroup.getEpochCount());
         end
         
         function testEpochShouldHaveDVParameters(self)
@@ -114,27 +114,30 @@ classdef TestPDSImport < TestPldapsBase
             pds = fileStruct.PDS;
             
             
-            epochsItr = self.epochGroup.getEpochsIterable().iterator();
+            epochs = self.epochGroup.getEpochs();
+            
             i = 1;
-            while(epochsItr.hasNext())
-                epoch = epochsItr.next();
-                assertEqual(pds.targ1XY(i),...
-                    epoch.getProtocolParameter('target1_XY_deg_visual_angle'));
-                if(isfield(pds, 'targ2XY'))
-                    assertEqual(pds.targ2XY(i),...
-                        epoch.getProtocolParameter('target2_XY_deg_visual_angle'));
-                end
-                if(isfield(pds,'coherence'))
-                    assertEqual(pds.coherence(i),...
-                        epoch.getProtocolParameter('coherence'));
-                end
-                if(isfield(pds, 'fp2XY'))
-                    assertEqual(pds.fp2XY(i),...
-                        epoch.getProtocolParameter('fp2_XY_deg_visual_angle'));
-                end
-                if(isfield(pds,'inRF'))
-                    assertEqual(pds.inRF(i),...
-                        epoch.getProtocolParameter('inReceptiveField'));
+            for e = 1:length(epochs)
+                if(isempty(strfind(e.getProtocolID(), 'intertrial')))
+                    assertEqual(pds.targ1XY(i),...
+                        epoch.getProtocolParameter('target1_XY_deg_visual_angle'));
+                    if(isfield(pds, 'targ2XY'))
+                        assertEqual(pds.targ2XY(i),...
+                            epoch.getProtocolParameter('target2_XY_deg_visual_angle'));
+                    end
+                    if(isfield(pds,'coherence'))
+                        assertEqual(pds.coherence(i),...
+                            epoch.getProtocolParameter('coherence'));
+                    end
+                    if(isfield(pds, 'fp2XY'))
+                        assertEqual(pds.fp2XY(i),...
+                            epoch.getProtocolParameter('fp2_XY_deg_visual_angle'));
+                    end
+                    if(isfield(pds,'inRF'))
+                        assertEqual(pds.inRF(i),...
+                            epoch.getProtocolParameter('inReceptiveField'));
+                    end
+                    i = i+1;
                 end
             end
         end
@@ -158,7 +161,7 @@ classdef TestPDSImport < TestPldapsBase
             j = 1;
             for i = 1:length(epochs)
                 epoch = epochs(i);
-                if(strcmp(char(epoch.getProtocolID()), 'intertrial'))
+                if(~isempty(strfind(char(epoch.getProtocolID()), 'intertrial')))
                     assertJavaEqual(epoch.getStartTime(),...
                         self.epochGroup.getStartTime.plusMillis(1000*pds.datapixxstoptime(j)));
                     assertJavaEqual(epoch.getEndTime(),...
@@ -176,7 +179,8 @@ classdef TestPDSImport < TestPldapsBase
         function testShouldUseTrialFunctionNameAsEpochProtocolID(self)
             epochs = self.epochGroup.getEpochs();
             for n=1:length(epochs)
-                assertTrue(epochs(n).getProtocolID().equals(java.lang.String(self.trialFunctionName)));
+                assertTrue(epochs(n).getProtocolID().equals(java.lang.String(self.trialFunctionName)) ||...
+                strcmp(char(epochs(n).getProtocolID()), [self.trialFunctionName '.intertrial']));
             end
         end
         
@@ -198,6 +202,10 @@ classdef TestPDSImport < TestPldapsBase
             
              epochs = self.epochGroup.getEpochs();
             for n=1:length(epochs)
+                if(~isempty(strfind(epochs(n).getProtocolID(), 'intertrial')))
+                    continue;
+                end
+                
                 props = epochs(n).getOwnerProperties().keySet();
                 assertTrue(props.contains('dataPixxStart_seconds'));
                 assertTrue(props.contains('dataPixxStop_seconds'));
@@ -248,18 +256,18 @@ classdef TestPDSImport < TestPldapsBase
             epochs = self.epochGroup.getEpochs();
             for n=1:length(epochs)
                 epoch = epochs(n);
-                assertFalse(isempty(epoch.getResponse(devices.eye_tracker.getName())));
-                
-                r = epoch.getResponse(devices.eye_tracker.getName());
-                rData = reshape(r.getFloatingPointData(),...
-                    r.getShape()');
-                
-                assertElementsAlmostEqual(pds.eyepos{n}(:,1:2), rData);
-                
-                assertFalse(isempty(epoch.getResponse(devices.eye_tracker_timer.getName())));    
-                r = epoch.getResponse(devices.eye_tracker_timer.getName());
-                rData = r.getFloatingPointData();
-                assertElementsAlmostEqual(pds.eyepos{n}(:,3), rData);
+                if(~isempty(epoch.getResponse(devices.eye_tracker.getName())))
+                    r = epoch.getResponse(devices.eye_tracker.getName());
+                    rData = reshape(r.getFloatingPointData(),...
+                        r.getShape()');
+                    
+                    assertElementsAlmostEqual(pds.eyepos{n}(:,1:2), rData);
+                    
+                    assertFalse(isempty(epoch.getResponse(devices.eye_tracker_timer.getName())));
+                    r = epoch.getResponse(devices.eye_tracker_timer.getName());
+                    rData = r.getFloatingPointData();
+                    assertElementsAlmostEqual(pds.eyepos{n}(:,3), rData);
+                end
             end
         end
         
@@ -284,7 +292,6 @@ classdef TestPDSImport < TestPldapsBase
             for n=1:length(epochs)
                 epoch = epochs(n);
                 assertFalse(isempty(epoch.getStimulus(devices.psychToolbox.getName())));
-                
             end
             
             epochsItr = self.epochGroup.getEpochsIterable().iterator();
