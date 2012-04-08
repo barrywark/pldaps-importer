@@ -118,7 +118,7 @@ classdef TestPDSImport < TestPldapsBase
             
             i = 1;
             for e = 1:length(epochs)
-                if(isempty(strfind(e.getProtocolID(), 'intertrial')))
+                if(isempty(strfind(epochs(e).getProtocolID(), 'intertrial')))
                     assertEqual(pds.targ1XY(i),...
                         epoch.getProtocolParameter('target1_XY_deg_visual_angle'));
                     if(isfield(pds, 'targ2XY'))
@@ -159,18 +159,19 @@ classdef TestPDSImport < TestPldapsBase
             epochs = self.epochGroup.getEpochs();
             
             j = 1;
+            datapixxmin = min(pds.datapixxstarttime);
             for i = 1:length(epochs)
                 epoch = epochs(i);
                 if(~isempty(strfind(char(epoch.getProtocolID()), 'intertrial')))
                     assertJavaEqual(epoch.getStartTime(),...
-                        self.epochGroup.getStartTime.plusMillis(1000*pds.datapixxstoptime(j)));
+                        self.epochGroup.getStartTime.plusMillis(1000*(pds.datapixxstoptime(j) - datapixxmin)));
                     assertJavaEqual(epoch.getEndTime(),...
-                        self.epochGroup.getStartTime.plusMillis(1000*pds.datapixxstarttime(j+1)));
+                        self.epochGroup.getStartTime.plusMillis(1000*(pds.datapixxstarttime(j+1) - datapixxmin)));
                 else
                     assertJavaEqual(epoch.getStartTime(),...
-                        self.epochGroup.getStartTime.plusMillis(1000*pds.datapixxstarttime(j)));
+                        self.epochGroup.getStartTime.plusMillis(1000*(pds.datapixxstarttime(j) - datapixxmin)));
                     assertJavaEqual(epoch.getEndTime(),...
-                        self.epochGroup.getStartTime.plusMillis(1000*pds.datapixxstoptime(j)));
+                        self.epochGroup.getStartTime.plusMillis(1000*(pds.datapixxstoptime(j) - datapixxmin)));
                     j = j+1;
                 end
             end
@@ -288,17 +289,13 @@ classdef TestPDSImport < TestPldapsBase
             
             devices.psychToolbox = experiment.externalDevice('PsychToolbox', 'Huk lab');
 
-            epochs = self.epochGroup.getEpochs();
-            for n=1:length(epochs)
-                epoch = epochs(n);
-                assertFalse(isempty(epoch.getStimulus(devices.psychToolbox.getName())));
-            end
-            
             epochsItr = self.epochGroup.getEpochsIterable().iterator();
             while(epochsItr.hasNext())
                 epoch = epochsItr.next();
                 s = epoch.getStimulus(devices.psychToolbox.getName());
-                assertFalse(isempty(s));
+                if(isempty(s))
+                    continue;
+                end
                 
                 assertTrue(strcmp(pluginID, char(s.getPluginID())));
                 
