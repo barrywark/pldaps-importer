@@ -82,14 +82,14 @@ function ImportPLX(epochGroup, plxFile, bits, plxRawFile, expFile, varargin)
             'Bit 7 events do not form Epoch boundary pairs');
     end
     if(abs(numel(end_times) - numel(plx.strobe_times)) > 1)
-        error('ovation:import:plx:epoch_boundary',...
+        warning('ovation:import:plx:epoch_boundary',...
             'End-trial and strobe_time events are not paired');
     end
     
-    
+    tic;
     for i = 1:length(plx.strobe_times)
         if(mod(i,5) == 0)
-            disp(['    Epoch ' num2str(i) ' of ' num2str(length(plx.strobe_times))]);
+            disp(['    Epoch ' num2str(i) ' of ' num2str(length(plx.strobe_times)) ' (' num2str(i/toc()) ' epochs/s)']);
         end
         
         % Find epoch
@@ -107,29 +107,39 @@ function ImportPLX(epochGroup, plxFile, bits, plxRawFile, expFile, varargin)
         % Add Epoch spike times and waveforms
         start_time = start_times(i);
         end_time = end_times(i);
-        insertSpikeDerivedResponses(epoch, plx, start_time, end_time);
+        insertSpikeDerivedResponses(epoch,...
+            plx,...
+            start_time,...
+            end_time,...
+            derivationParameters,...
+            drSuffix);
         
         % Add bit events to Epoch
-        insertEvents(epoch, plx, bitsMap, start_time, end_time);
+        insertEvents(epoch, plx, bitsMap, start_time, end_time, drSuffix);
         
         % Inter-epoch spikes are end_time to next strobe_time (if present)
         % else end
-        if(~isempty(epoch.nextEpoch())) 
-            next = epoch.nextEpoch();
-            if(next.getProtocolID().contains('intertrial'))
+        if(~isempty(epoch.getNextEpoch()))
+            next = epoch.getNextEpoch();
+            if(isempty(strfind(next.getProtocolID(), 'intertrial')))
                 if(i == length(start_times))
                     inter_trial_end = [];
                 else
                     inter_trial_end = start_times(i+1);
                 end
                 
-                insertSpikeDerivedResponses(next, plx, end_time, inter_trial_end);
+                insertSpikeDerivedResponses(next,...
+                    plx,...
+                    end_time,...
+                    inter_trial_end,...
+                    derivationParameters,...
+                    drSuffix);
             end
+            
+            % Add bit events to inter-trial Epoch
+            insertEvents(next, plx, bitsMap, start_time, end_time, drSuffix);
         end
         
-        
-        % Add bit events to inter-trial Epoch
-        insertEvents(epoch, plx, bitsMap, start_time, end_time);
         
     end
     
@@ -140,7 +150,7 @@ function ImportPLX(epochGroup, plxFile, bits, plxRawFile, expFile, varargin)
     epochGroup.addResource('com.plexon.exp', expFile);
 end
 
-function insertEvents(epoch, plx, bitsMap, start_time, end_time)
+function insertEvents(epoch, plx, bitsMap, start_time, end_time, drSuffix)
     
     bits = bitsMap.keySet.toArray;
     for i = 1:length(bits)
@@ -152,7 +162,7 @@ function insertEvents(epoch, plx, bitsMap, start_time, end_time)
         if(isempty(end_time))
             event_idx = eventTimestamps >= start_time;
         else
-            event_idx = eventTimestamps >= start_time && eventTimestamps < end_time;
+            event_idx = eventTimestamps >= start_time & eventTimestamps < end_time;
         end
         
         
@@ -165,7 +175,8 @@ function insertEvents(epoch, plx, bitsMap, start_time, end_time)
     end
 end
 
-function insertSpikeDerivedResponses(epoch, plx, start_time, end_time)
+function insertSpikeDerivedResponses(epoch, plx, start_time, end_time, derivationParameters, drSuffix)
+    import ovation.*
     
     [maxChannels,maxUnits] = size(plx.wave_ts);
     
@@ -179,13 +190,13 @@ function insertSpikeDerivedResponses(epoch, plx, start_time, end_time)
             
             % Find spikes in this Epoch
             if(isempty(end_time))
-                spke_idx = plx.wave_ts{c,u} >= start_time;
+                spike_idx = plx.wave_ts{c,u} >= start_time;
             else 
-                spike_idx = plx.wave_ts{c,u} >= start_time && plx.wave_ts{c,u} < end_time;
+                spike_idx = plx.wave_ts{c,u} >= start_time & plx.wave_ts{c,u} < end_time;
             end
             
             % Calculate relative spike times
-            spike_times = plx.wave_ts{c,u}(spke_idx) - start_time;
+            spike_times = plx.wave_ts{c,u}(spike_idx) - start_time;
             
             
             % Insert spike times
@@ -203,12 +214,14 @@ function insertSpikeDerivedResponses(epoch, plx, start_time, end_time)
             
             derivedResponseName = drNameCandidate;
             
-            epoch.insertDerivedResponse(derivedResponseName,...
-                NumericData(spike_times'),...
-                's',... %times in seconds
-                derivationParameters,...
-                {'time from epoch start'}...
-                );
+            if(~isempty(spike_times))
+                epoch.insertDerivedResponse(derivedResponseName,...
+                    NumericData(spike_times'),...
+                    's',... %times in seconds
+                    derivationParameters,...
+                    {'time from epoch start'}...
+                    );
+            end
             
             
             % Insert spike wave forms
@@ -216,27 +229,30 @@ function insertSpikeDerivedResponses(epoch, plx, start_time, end_time)
                 num2str(c-1) '_unit_' num2str(u-1)];
             
             waveformData = plx.spike_waves{c,u}(spike_idx,:);
-            data = NumericData(reshape(waveformData, 1, ...
-                numel(waveformData)),...
-                size(waveformData));
             
-            j = 1;
-            drNameCandidate = [derivedResponseName '-' ...
-                drSuffix '-' num2str(j)];
-            while(~isempty(epoch.getMyDerivedResponse(drNameCandidate)))
-                j = j+1;
-                drNameCandidate = [derivedResponseName '-'...
+            if(~isempty(waveformData))
+                data = NumericData(reshape(waveformData, 1, ...
+                    numel(waveformData)),...
+                    size(waveformData));
+                
+                j = 1;
+                drNameCandidate = [derivedResponseName '-' ...
                     drSuffix '-' num2str(j)];
+                while(~isempty(epoch.getMyDerivedResponse(drNameCandidate)))
+                    j = j+1;
+                    drNameCandidate = [derivedResponseName '-'...
+                        drSuffix '-' num2str(j)];
+                end
+                
+                derivedResponseName = drNameCandidate;
+                
+                epoch.insertDerivedResponse(derivedResponseName,...
+                    data,...
+                    'mV',... % TODO confirm units
+                    derivationParameters,...
+                    {'spikes','waveform'}... % TODO dimension labels?
+                    );
             end
-            
-            derivedResponseName = drNameCandidate;
-            
-            epoch.insertDerivedResponse(derivedResponseName,...
-                data,...
-                'mV',... % TODO confirm units
-                derivationParameters,...
-                {'spikes','waveform'}... % TODO dimension labels?
-                );
             
         end
     end
