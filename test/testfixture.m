@@ -1,4 +1,4 @@
-function runtestsuite(test_directory)
+function testfixture(test_directory)
 
     % This script builds a new Ovation database for testing and imports the
     % test fixture. Run this script from the pladps-importer/test directory.
@@ -7,11 +7,12 @@ function runtestsuite(test_directory)
     % runner) to re-run the test suite without building a new database or
     % re-importing the test fixture data.
 
-
-    % N.B. these values should match in TestPldapsBase
-    connection_file = 'ovation/matlab_fd.connection';
-    username = 'TestUser';
-    password = 'password';
+    cwd = pwd();
+    cd(test_directory)
+    
+    connection_file = TestPldapsBase.connection_file;
+    username = TestPldapsBase.username;
+    password = TestPldapsBase.password;
 
     % We're tied to the test fixture defined by these files and values, 
     % but this is the only dependency. There shouldn't be any magic numbers
@@ -54,7 +55,7 @@ function runtestsuite(test_directory)
     source,...
     pdsFile,...
     timezone,...
-    10);
+    5);
     toc;
     epochGroup.addResource('edu.utexas.huk.pds', pdsFile);
     
@@ -66,10 +67,10 @@ function runtestsuite(test_directory)
         plxFile,...
         dv.bits,...
         plxRawFile,...
-        plxExpFile,...
-        10);
+        plxExpFile);
     toc;
 
     %runtests(test_directory, '-xmlfile', 'test-output.xml');
 
+    cd(cwd);
 end
