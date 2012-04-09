@@ -96,7 +96,8 @@ function insertEpochs(epochGroup, protocolID, pds, parameters, devices, ntrials)
         if(mod(n,5) == 0)
             elapsedTime = toc;
             
-            disp(['    ' num2str(n) ' of ' num2str(ntrials) ' (' num2str(elapsedTime/n) ' s/epoch)...']);
+            disp(['    ' num2str(n) ' of ' num2str(ntrials) ' (' num2str(elapsedTime/5) ' s/epoch)...']);
+            tic();
         end
         
         

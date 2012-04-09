@@ -110,9 +110,9 @@ classdef TestPLXImport < TestPldapsBase
                     continue;
                 end
                 for i = 1:length(drNames)
-                    if(~isempty(strfind(drNames(i), 'spikeTimes_')) &&...
-                            ~isempty(strfind(drNames(i), 'spikeWaveforms_')))
+                    if(~isempty(strfind(drNames(i), 'spikeTimes_')))
                         actual = actual + 1;
+                        break;
                     end
                 end
             end
@@ -164,27 +164,29 @@ classdef TestPLXImport < TestPldapsBase
                             
                             assertElementsAlmostEqual(actualSpikeTimes, epochSpikeTimes,...
                                 'absolute',...
-                                1e-6); %microsecond precision
+                                1e-9); %nanosecond precision
                             assertTrue(min(actualSpikeTimes) >= 0);
                             assertTrue(max(actualSpikeTimes) < epoch.getDuration());
                         end
                         
                         if(~isempty(interEpochSpikeTimes))
-                           epoch = epoch.getNextEpoch();
-                           derivedResponses = epoch.getDerivedResponses(drName);
-                           
-                           assert(isempty(derivedResponses) == isempty(epochSpikeTimes));
-                           
-                           for d = 1:length(derivedResponses)
-                               dr = derivedResponses(d);
-                               actualSpikeTimes = dr.getFloatingPointData();
-                               
-                               assertElementsAlmostEqual(actualSpikeTimes, interEpochSpikeTimes,...
-                                   'absolute',...
-                                   1e-6); %microsecond precision
-                               assertTrue(min(actualSpikeTimes) >= 0);
-                               assertTrue(max(actualSpikeTimes) < epoch.getDuration());
-                           end
+                            interTrialEpoch = epoch.getNextEpoch();
+                            if(~isempty(interTrialEpoch))
+                                derivedResponses = interTrialEpoch.getDerivedResponses(drName);
+                                
+                                assert(isempty(derivedResponses) == isempty(epochSpikeTimes));
+                                
+                                for d = 1:length(derivedResponses)
+                                    dr = derivedResponses(d);
+                                    actualSpikeTimes = dr.getFloatingPointData();
+                                    
+                                    assertElementsAlmostEqual(actualSpikeTimes, interEpochSpikeTimes,...
+                                        'absolute',...
+                                        1e-6); %microsecond precision
+                                    assertTrue(min(actualSpikeTimes) >= 0);
+                                    assertTrue(max(actualSpikeTimes) < interTrialEpoch.getDuration());
+                                end
+                            end
                         end
                     end
                 end

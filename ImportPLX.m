@@ -89,7 +89,8 @@ function ImportPLX(epochGroup, plxFile, bits, plxRawFile, expFile, varargin)
     tic;
     for i = 1:length(plx.strobe_times)
         if(mod(i,5) == 0)
-            disp(['    Epoch ' num2str(i) ' of ' num2str(length(plx.strobe_times)) ' (' num2str(toc()/i) ' s/epoch)']);
+            disp(['    Epoch ' num2str(i) ' of ' num2str(length(plx.strobe_times)) ' (' num2str(toc()/5) ' s/epoch)']);
+            tic();
         end
         
         % Find epoch
