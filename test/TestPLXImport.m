@@ -184,7 +184,8 @@ classdef TestPLXImport < TestPldapsBase
                                         'absolute',...
                                         1e-6); %microsecond precision
                                     assertTrue(min(actualSpikeTimes) >= 0);
-                                    assertTrue(max(actualSpikeTimes) < interTrialEpoch.getDuration());
+                                    
+                                    assertTrue(abs(max(actualSpikeTimes) - interTrialEpoch.getDuration()) < 0.001);
                                 end
                             end
                         end
