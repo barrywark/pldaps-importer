@@ -81,7 +81,7 @@ function ImportPLX(epochGroup, plxFile, bits, plxRawFile, expFile, varargin)
         error('ovation:import:plx:epoch_boundary',...
             'Bit 7 events do not form Epoch boundary pairs');
     end
-    if(abs(numel(end_times) - numel(plx.unique_number)) > 1)
+    if(abs(numel(end_times) - size(plx.unique_number, 1)) > 1)
         error('ovation:import:plx:epoch_boundary',...
             'Epoch boundary events and unique_number values are not paired');
     end
