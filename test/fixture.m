@@ -1,4 +1,4 @@
-function testfixture(test_directory)
+function fixture(test_directory)
 
     % This script builds a new Ovation database for testing and imports the
     % test fixture. Run this script from the pladps-importer/test directory.
@@ -70,7 +70,6 @@ function testfixture(test_directory)
         plxExpFile);
     toc;
 
-    %runtests(test_directory, '-xmlfile', 'test-output.xml');
 
     cd(cwd);
 end

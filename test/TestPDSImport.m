@@ -118,7 +118,8 @@ classdef TestPDSImport < TestPldapsBase
             
             i = 1;
             for e = 1:length(epochs)
-                if(isempty(strfind(epochs(e).getProtocolID(), 'intertrial')))
+                epoch = epochs(e);
+                if(isempty(strfind(epoch.getProtocolID(), 'intertrial')))
                     assertEqual(pds.targ1XY(i),...
                         epoch.getProtocolParameter('target1_XY_deg_visual_angle'));
                     if(isfield(pds, 'targ2XY'))
@@ -158,21 +159,21 @@ classdef TestPDSImport < TestPldapsBase
             
             epochs = self.epochGroup.getEpochs();
             
-            j = 1;
             datapixxmin = min(pds.datapixxstarttime);
+            pdsIdx = 1;
             for i = 1:length(epochs)
-                epoch = epochs(i);
+                epoch = epochs(pdsIdx);
                 if(~isempty(strfind(char(epoch.getProtocolID()), 'intertrial')))
                     assertJavaEqual(epoch.getStartTime(),...
-                        self.epochGroup.getStartTime.plusMillis(1000*(pds.datapixxstoptime(j) - datapixxmin)));
+                        self.epochGroup.getStartTime.plusMillis(1000*(pds.datapixxstoptime(pdsIdx-1) - datapixxmin)));
                     assertJavaEqual(epoch.getEndTime(),...
-                        self.epochGroup.getStartTime.plusMillis(1000*(pds.datapixxstarttime(j+1) - datapixxmin)));
+                        self.epochGroup.getStartTime.plusMillis(1000*(pds.datapixxstarttime(pdsIdx) - datapixxmin)));
                 else
                     assertJavaEqual(epoch.getStartTime(),...
-                        self.epochGroup.getStartTime.plusMillis(1000*(pds.datapixxstarttime(j) - datapixxmin)));
+                        self.epochGroup.getStartTime.plusMillis(1000*(pds.datapixxstarttime(pdsIdx) - datapixxmin)));
                     assertJavaEqual(epoch.getEndTime(),...
-                        self.epochGroup.getStartTime.plusMillis(1000*(pds.datapixxstoptime(j) - datapixxmin)));
-                    j = j+1;
+                        self.epochGroup.getStartTime.plusMillis(1000*(pds.datapixxstoptime(pdsIdx) - datapixxmin)));
+                    pdsIdx = pdsIdx + 1;
                 end
             end
         end
@@ -255,19 +256,24 @@ classdef TestPDSImport < TestPldapsBase
             devices.eye_tracker_timer = experiment.externalDevice('Windows', 'Microsoft');
             
             epochs = self.epochGroup.getEpochs();
-            for n=1:length(epochs)
-                epoch = epochs(n);
+            eyeTrackingEpoch = 1;
+            for i=1:length(epochs)
+                epoch = epochs(i);
                 if(~isempty(epoch.getResponse(devices.eye_tracker.getName())))
+                    assert(isempty(strfind(epoch.getProtocolID(), 'intertrial')));
                     r = epoch.getResponse(devices.eye_tracker.getName());
                     rData = reshape(r.getFloatingPointData(),...
                         r.getShape()');
                     
-                    assertElementsAlmostEqual(pds.eyepos{n}(:,1:2), rData);
+                    
+                    assertElementsAlmostEqual(pds.eyepos{eyeTrackingEpoch}(:,1:2), rData);
                     
                     assertFalse(isempty(epoch.getResponse(devices.eye_tracker_timer.getName())));
                     r = epoch.getResponse(devices.eye_tracker_timer.getName());
                     rData = r.getFloatingPointData();
-                    assertElementsAlmostEqual(pds.eyepos{n}(:,3), rData);
+                    assertElementsAlmostEqual(pds.eyepos{eyeTrackingEpoch}(:,3), rData);
+                    
+                    eyeTrackingEpoch = eyeTrackingEpoch + 1;
                 end
             end
         end

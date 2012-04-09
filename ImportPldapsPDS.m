@@ -100,8 +100,9 @@ function insertEpochs(epochGroup, protocolID, pds, parameters, devices, ntrials)
         end
         
         
-        dataPixxStart = pds.datapixxstarttime(n);
-        dataPixxEnd = pds.datapixxstoptime(n);
+        dataPixxZero = min(pds.datapixxstarttime);
+        dataPixxStart = pds.datapixxstarttime(n) - dataPixxZero;
+        dataPixxEnd = pds.datapixxstoptime(n) - dataPixxZero;
         
         
         
@@ -121,9 +122,9 @@ function insertEpochs(epochGroup, protocolID, pds, parameters, devices, ntrials)
         end
         
         if(n > 1) % Assumes first Epoch is not an inter-trial
-           if(dataPixxStart > pds.datapixxstoptime(n-1))
+           if(dataPixxStart > (pds.datapixxstoptime(n-1) - dataPixxZero))
                % Inserting inter-trial Epoch
-               interEpochDataPixxStart = pds.datapixxstoptime(n-1);
+               interEpochDataPixxStart = pds.datapixxstoptime(n-1) - dataPixxZero;
                interEpochDataPixxStop = dataPixxStart;
                
                interEpoch = epochGroup.insertEpoch(epochGroup.getStartTime().plusMillis(interEpochDataPixxStart * 1000),...
