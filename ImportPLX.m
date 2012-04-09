@@ -121,7 +121,7 @@ function ImportPLX(epochGroup, plxFile, bits, plxRawFile, expFile, varargin)
         % else end
         if(~isempty(epoch.getNextEpoch()))
             next = epoch.getNextEpoch();
-            if(isempty(strfind(next.getProtocolID(), 'intertrial')))
+            if(strfind(next.getProtocolID(), 'intertrial'))
                 if(i == length(start_times))
                     inter_trial_end = [];
                 else
